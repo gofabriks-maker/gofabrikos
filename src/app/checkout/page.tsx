@@ -448,7 +448,7 @@ export default function CheckoutPage() {
       <nav className="sticky top-0 z-50 bg-white border-b border-stone-200">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold text-rose-800 tracking-wide">
-            NAARI<span className="text-stone-400 font-light"> Fashions</span>
+            Go<span className="text-stone-400 font-light">Fabrikos</span>
           </Link>
           <div className="flex items-center gap-1 text-xs text-stone-500">
             <Shield size={12} className="text-emerald-500" /> Secure Checkout

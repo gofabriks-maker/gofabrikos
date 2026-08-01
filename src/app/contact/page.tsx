@@ -43,10 +43,25 @@ export default function ContactPage() {
   const [submitted, setSubmit] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => { setLoading(false); setSubmit(true) }, 1200)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (res.ok) {
+        setSubmit(true)
+      } else {
+        alert('Failed to send message. Please try WhatsApp instead.')
+      }
+    } catch {
+      alert('Network error. Please try WhatsApp instead.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

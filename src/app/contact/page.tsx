@@ -156,7 +156,7 @@ export default function ContactPage() {
                 <h2 className="text-lg font-bold text-stone-800 mb-1">Send a Message</h2>
                 <p className="text-sm text-stone-500 mb-6">We read every message and reply personally.</p>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-stone-500 mb-1">Full Name *</label>
                       <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}

@@ -262,7 +262,7 @@ export default function FabricsClient({ initialProducts }: { initialProducts: Pr
                             <ShoppingBag size={12} /> Add to Cart
                           </Link>
                           <a
-                            href={`https://wa.me/919581734837?text=Hi%20GoFabrikos%2C%20I%20want%20to%20order%20${encodeURIComponent(product.name)}%20at%20%E2%82%B9${product.price}%2Fm`}
+                            href={`https://wa.me/918298308314?text=Hi%20GoFabrikos%2C%20I%20want%20to%20order%20${encodeURIComponent(product.name)}%20at%20%E2%82%B9${product.price}%2Fm`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-8 flex items-center justify-center bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
@@ -303,7 +303,7 @@ export default function FabricsClient({ initialProducts }: { initialProducts: Pr
                           </div>
                           <div className="flex gap-2">
                             <Link href={`/fabrics/${product.slug}`} className="btn-primary !py-1.5 !px-4 !text-xs">View</Link>
-                            <a href={`https://wa.me/919581734837?text=Hi%20GoFabrikos%2C%20I%20want%20to%20order%20${encodeURIComponent(product.name)}`} target="_blank" rel="noopener noreferrer" className="w-8 flex items-center justify-center bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                            <a href={`https://wa.me/918298308314?text=Hi%20GoFabrikos%2C%20I%20want%20to%20order%20${encodeURIComponent(product.name)}`} target="_blank" rel="noopener noreferrer" className="w-8 flex items-center justify-center bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
                               <MessageCircle size={14} />
                             </a>
                           </div>

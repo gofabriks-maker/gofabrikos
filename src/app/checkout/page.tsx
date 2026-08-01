@@ -139,7 +139,7 @@ function OrderSummary({ coupon, onCoupon }: { coupon: string; onCoupon: (c: stri
 function AddressStep({ onNext }: { onNext: () => void }) {
   const [saved, setSaved] = useState<'home' | 'work' | 'new'>('home')
   const [form, setForm] = useState({
-    name: 'Lakshmi Sowjanya Aaki', mobile: '9581734837',
+    name: 'Lakshmi Sowjanya Aaki', mobile: '8298308314',
     pin: '522001', city: 'Guntur', state: 'Andhra Pradesh',
     address: 'Shop No. 346, Sri Vasavi WCS, Mangalagiri Road',
     landmark: 'Near Mangalagiri Road',
@@ -235,7 +235,7 @@ function ReviewStep({ onNext, onBack }: { onNext: () => void; onBack: () => void
           <p className="text-xs font-bold text-stone-500 uppercase tracking-wider">Delivering to</p>
           <button className="text-xs text-rose-600 hover:underline">Change</button>
         </div>
-        <p className="text-sm font-medium text-stone-800">Lakshmi Sowjanya Aaki · 9581734837</p>
+        <p className="text-sm font-medium text-stone-800">Lakshmi Sowjanya Aaki · 8298308314</p>
         <p className="text-sm text-stone-500">Shop No. 346, Sri Vasavi WCS, Mangalagiri Road, Guntur, Andhra Pradesh – 522001</p>
       </div>
 

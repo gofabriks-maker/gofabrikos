@@ -282,7 +282,7 @@ export default function AboutPage() {
               <h2 className="text-2xl font-black text-white mb-6">Get In Touch</h2>
               <div className="space-y-4">
                 {[
-                  { icon: <Phone size={18} className="text-green-400" />, label: 'WhatsApp / Phone', value: '+91 95817 34837', href: 'https://wa.me/919581734837' },
+                  { icon: <Phone size={18} className="text-green-400" />, label: 'WhatsApp / Phone', value: '+91 82983 08314', href: 'https://wa.me/918298308314' },
                   { icon: <Mail size={18} className="text-blue-400" />, label: 'Email', value: 'care@gofabrikos.com', href: 'mailto:care@gofabrikos.com' },
                   { icon: <MapPin size={18} className="text-red-400" />, label: 'Location', value: 'Guntur, Andhra Pradesh, India', href: '#' },
                   { icon: <Clock size={18} className="text-yellow-400" />, label: 'Business Hours', value: 'Mon–Sat: 8 AM – 9 PM IST', href: '#' },
@@ -301,7 +301,7 @@ export default function AboutPage() {
               </div>
 
               <a
-                href="https://wa.me/919581734837?text=Hi! I have a question about GoFabrikos fabrics."
+                href="https://wa.me/918298308314?text=Hi! I have a question about GoFabrikos fabrics."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center space-x-2 px-6 py-3 rounded-xl font-bold text-white hover:opacity-90 transition-all hover:scale-105"
@@ -350,7 +350,7 @@ export default function AboutPage() {
               Browse All Fabrics
             </Link>
             <a
-              href="https://wa.me/919581734837"
+              href="https://wa.me/918298308314"
               target="_blank"
               rel="noopener noreferrer"
               className="px-8 py-3 rounded-xl font-bold border-2 border-gray-200 text-gray-700 hover:border-green-400 hover:text-green-600 transition-all flex items-center justify-center space-x-2"
@@ -366,7 +366,7 @@ export default function AboutPage() {
       <footer className="py-8 border-t bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
           <p className="font-semibold text-gray-600 mb-1">GoFabrikos | Prop: Lakshmi Sowjanya Aaki</p>
-          <p>Premium Indian Fabrics • WhatsApp: +91 95817 34837 • Guntur, Andhra Pradesh</p>
+          <p>Premium Indian Fabrics • WhatsApp: +91 82983 08314 • Guntur, Andhra Pradesh</p>
         </div>
       </footer>
     </div>

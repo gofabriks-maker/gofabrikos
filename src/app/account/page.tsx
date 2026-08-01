@@ -8,7 +8,7 @@ type Tab = 'profile' | 'orders' | 'addresses' | 'wishlist'
 const USER = {
   name: 'Lakshmi Sowjanya Aaki',
   email: 'sowjanya@gofabrikos.com',
-  mobile: '+91 95817 34837',
+  mobile: '+91 82983 08314',
   joined: 'March 2025',
   gstin: '37AAGTS1234A1Z5',
   totalOrders: 4,
@@ -22,8 +22,8 @@ const RECENT_ORDERS = [
 ]
 
 const ADDRESSES = [
-  { id: 1, label: '🏠 Home', name: 'Lakshmi Sowjanya Aaki', line1: 'Shop No. 346, Sri Vasavi WCS, Mangalagiri Road', city: 'Guntur', state: 'Andhra Pradesh', pin: '522001', mobile: '9581734837', isDefault: true },
-  { id: 2, label: '🏢 Office', name: 'GoFabrikos', line1: '3rd Floor, Shop No. 346, Sri Vasavi WCS', city: 'Guntur', state: 'Andhra Pradesh', pin: '522001', mobile: '9581734837', isDefault: false },
+  { id: 1, label: '🏠 Home', name: 'Lakshmi Sowjanya Aaki', line1: 'Shop No. 346, Sri Vasavi WCS, Mangalagiri Road', city: 'Guntur', state: 'Andhra Pradesh', pin: '522001', mobile: '8298308314', isDefault: true },
+  { id: 2, label: '🏢 Office', name: 'GoFabrikos', line1: '3rd Floor, Shop No. 346, Sri Vasavi WCS', city: 'Guntur', state: 'Andhra Pradesh', pin: '522001', mobile: '8298308314', isDefault: false },
 ]
 
 const WISHLIST = [

@@ -7,17 +7,17 @@ const CONTACT_ITEMS = [
   {
     icon: <MessageCircle size={22} className="text-green-500" />,
     label: 'WhatsApp',
-    value: '+91 95817 34837',
+    value: '+91 82983 08314',
     sub: 'Fastest response — usually within minutes',
-    href: 'https://wa.me/919581734837?text=Hi%20GoFabrikos%2C%20I%20need%20help.',
+    href: 'https://wa.me/918298308314?text=Hi%20GoFabrikos%2C%20I%20need%20help.',
     bg: 'bg-green-50 border-green-200',
   },
   {
     icon: <Phone size={22} className="text-blue-500" />,
     label: 'Phone',
-    value: '+91 95817 34837',
+    value: '+91 82983 08314',
     sub: 'Mon–Sat: 8 AM – 9 PM IST',
-    href: 'tel:+919581734837',
+    href: 'tel:+918298308314',
     bg: 'bg-blue-50 border-blue-200',
   },
   {
@@ -158,7 +158,7 @@ export default function ContactPage() {
                 </div>
                 <h3 className="text-xl font-bold text-stone-800 mb-2">Message Sent!</h3>
                 <p className="text-stone-500 text-sm mb-1">We've received your message and will reply within 24 hours.</p>
-                <p className="text-stone-400 text-xs mb-6">For faster help, WhatsApp us at +91 95817 34837</p>
+                <p className="text-stone-400 text-xs mb-6">For faster help, WhatsApp us at +91 82983 08314</p>
                 <button
                   onClick={() => { setSubmit(false); setForm({ name: '', mobile: '', email: '', subject: '', message: '' }) }}
                   className="px-6 py-2.5 border border-stone-200 text-stone-600 rounded-xl text-sm hover:bg-stone-50"
@@ -223,7 +223,7 @@ export default function ContactPage() {
                   </button>
                   <p className="text-xs text-stone-400 text-center">
                     Or WhatsApp us directly for instant help →{' '}
-                    <a href="https://wa.me/919581734837" className="text-rose-600 hover:underline">+91 95817 34837</a>
+                    <a href="https://wa.me/918298308314" className="text-rose-600 hover:underline">+91 82983 08314</a>
                   </p>
                 </form>
               </>

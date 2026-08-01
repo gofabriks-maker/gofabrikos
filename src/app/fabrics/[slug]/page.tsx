@@ -356,7 +356,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
     `Please confirm availability and share payment details. Thank you!`,
   ].join('%0A')
 
-  const whatsappOrder = `https://wa.me/919581734837?text=${waOrderText}`
+  const whatsappOrder = `https://wa.me/918298308314?text=${waOrderText}`
   const whatsappShare = `https://wa.me/?text=Check out this fabric on GoFabrikos: ${product.fullName} at ₹${product.price}/m — ${encodeURIComponent('https://gofabrikos.com/fabrics/' + product.slug)}`
 
   function handleAddToCart() { setAdded(true); setTimeout(() => setAdded(false), 2500) }
@@ -885,7 +885,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       <footer className="mt-8 py-8 border-t bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center text-gray-400 text-sm">
           <p className="font-semibold text-gray-600 mb-1">GoFabrikos | Prop: Lakshmi Sowjanya Aaki</p>
-          <p>Premium Indian Fabrics · WhatsApp: +91 95817 34837 · Guntur, Andhra Pradesh</p>
+          <p>Premium Indian Fabrics · WhatsApp: +91 82983 08314 · Guntur, Andhra Pradesh</p>
         </div>
       </footer>
 
@@ -952,7 +952,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                   Close
                 </button>
                 <a
-                  href="https://wa.me/919581734837?text=Hi! I need help deciding how many metres to buy."
+                  href="https://wa.me/918298308314?text=Hi! I need help deciding how many metres to buy."
                   target="_blank" rel="noopener noreferrer"
                   className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold text-center transition-colors"
                   style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}

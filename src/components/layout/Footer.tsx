@@ -65,7 +65,7 @@ export default function Footer() {
           <div>
             <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-5">Contact</h4>
             <div className="space-y-3 text-sm">
-              <p>💬 <a href="https://wa.me/919581734837" className="hover:text-gold transition-colors">+91 95817 34837</a></p>
+              <p>💬 <a href="https://wa.me/918298308314" className="hover:text-gold transition-colors">+91 82983 08314</a></p>
               <p>📧 care@gofabrikos.com</p>
               <p>🕐 Mon–Sat: 8 AM – 9 PM</p>
               <p>📍 Guntur, Andhra Pradesh</p>

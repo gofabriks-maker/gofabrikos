@@ -76,7 +76,7 @@ const STATUS_ICON: Record<OrderStatus, React.ReactNode> = {
 
 // ── Mock fallback data ────────────────────────────────────────────────────────
 const MOCK_ORDERS: Order[] = [
-  { id:1, order_number:'GF-2026-0001', customer_name:'Lakshmi Sowjanya', customer_mobile:'9581734837', customer_email:'sowjanya@gofabrikos.com', status:'delivered', total:3850, payment_method:'UPI', created_at:'2026-07-20T10:30:00Z', shipping_address:{ city:'Guntur', state:'Andhra Pradesh', pin:'522001' } },
+  { id:1, order_number:'GF-2026-0001', customer_name:'Lakshmi Sowjanya', customer_mobile:'8298308314', customer_email:'sowjanya@gofabrikos.com', status:'delivered', total:3850, payment_method:'UPI', created_at:'2026-07-20T10:30:00Z', shipping_address:{ city:'Guntur', state:'Andhra Pradesh', pin:'522001' } },
   { id:2, order_number:'GF-2026-0002', customer_name:'Priya Sharma', customer_mobile:'9876543210', status:'shipped', total:1299, payment_method:'Card', created_at:'2026-07-22T14:15:00Z', shipping_address:{ city:'Hyderabad', state:'Telangana', pin:'500001' } },
   { id:3, order_number:'GF-2026-0003', customer_name:'Anita Reddy', customer_mobile:'8765432109', status:'processing', total:640, payment_method:'COD', created_at:'2026-07-25T09:00:00Z', shipping_address:{ city:'Vijayawada', state:'Andhra Pradesh', pin:'520001' } },
   { id:4, order_number:'GF-2026-0004', customer_name:'Meena Patel', customer_mobile:'7654321098', status:'confirmed', total:2400, payment_method:'UPI', created_at:'2026-07-28T06:45:00Z', shipping_address:{ city:'Mumbai', state:'Maharashtra', pin:'400001' } },

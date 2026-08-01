@@ -17,7 +17,7 @@ Business Name: GoFabrikos
 Registered Address: 3rd Floor, Shop No. 346, Sri Vasavi Wholesale Cloth Merchant Society, Mangalagiri Road, Guntur – 522001, Andhra Pradesh, India
 GST Registration: Registered under GST (Andhra Pradesh — State Code 37)
 Email: care@gofabrikos.com
-Phone: +91 95817 34837`,
+Phone: +91 82983 08314`,
   },
   {
     title: '3. Products & Pricing',

@@ -100,7 +100,7 @@ export default function ReturnsPage() {
             <div>
               <h3 className="font-bold text-stone-800 mb-2">How to Initiate a Return</h3>
               <ol className="space-y-2 list-decimal list-inside marker:text-rose-600 marker:font-bold">
-                <li>WhatsApp us at <a href="https://wa.me/919581734837" className="text-rose-600 hover:underline font-medium">+91 95817 34837</a> with your Order ID and reason for return</li>
+                <li>WhatsApp us at <a href="https://wa.me/918298308314" className="text-rose-600 hover:underline font-medium">+91 82983 08314</a> with your Order ID and reason for return</li>
                 <li>We'll confirm eligibility and share the return address within 24 hours</li>
                 <li>Pack the fabric securely in original packaging and ship it back</li>
                 <li>Once received and inspected, refund is processed within 3–5 business days</li>
@@ -198,10 +198,10 @@ export default function ReturnsPage() {
             <p className="text-stone-500 text-sm mt-1">Our team is available Mon–Sat, 8 AM – 9 PM</p>
           </div>
           <a
-            href="tel:+919581734837"
+            href="tel:+918298308314"
             className="flex items-center gap-2 px-5 py-2.5 bg-rose-800 text-white rounded-xl text-sm font-semibold hover:bg-rose-900 whitespace-nowrap"
           >
-            <Phone size={15} /> +91 95817 34837
+            <Phone size={15} /> +91 82983 08314
           </a>
         </div>
       </div>

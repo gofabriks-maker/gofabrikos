@@ -44,7 +44,7 @@ const FAQ_CATEGORIES = [
       { q: 'What is your return policy?', a: '7-day return window from the date of delivery. Fabric must be unused, uncut, and in original packaging with tags intact. Visit our Returns page for full process.' },
       { q: 'Can I return a cut piece?', a: 'No. Once fabric is cut or washed, it cannot be returned. Please order a swatch first if you are unsure.' },
       { q: 'How long does a refund take?', a: 'Refund is processed within 3–5 business days after we receive and inspect the returned fabric. Amount credited to original payment method.' },
-      { q: 'What if I receive a damaged/wrong item?', a: 'Contact us within 48 hours of delivery with a photo on WhatsApp (+91 95817 34837). We will replace or refund immediately — no questions asked.' },
+      { q: 'What if I receive a damaged/wrong item?', a: 'Contact us within 48 hours of delivery with a photo on WhatsApp (+91 82983 08314). We will replace or refund immediately — no questions asked.' },
     ],
   },
   {
@@ -185,7 +185,7 @@ export default function FaqPage() {
           <h3 className="font-bold text-stone-800 mb-2">Still have a question?</h3>
           <p className="text-stone-500 text-sm mb-4">Our team is available Mon–Sat, 8 AM – 9 PM on WhatsApp.</p>
           <a
-            href="https://wa.me/919581734837?text=Hi%20GoFabrikos%2C%20I%20have%20a%20question."
+            href="https://wa.me/918298308314?text=Hi%20GoFabrikos%2C%20I%20have%20a%20question."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors"

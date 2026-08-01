@@ -67,7 +67,7 @@ No system is 100% secure. If you suspect any unauthorised access to your account
 • Deletion: Request deletion of your account and associated data (subject to legal obligations).
 • Opt-out: Unsubscribe from promotional emails at any time using the unsubscribe link.
 
-To exercise any of these rights, email us at care@gofabrikos.com or WhatsApp +91 95817 34837.`,
+To exercise any of these rights, email us at care@gofabrikos.com or WhatsApp +91 82983 08314.`,
   },
   {
     title: '7. Children\'s Privacy',
@@ -84,7 +84,7 @@ To exercise any of these rights, email us at care@gofabrikos.com or WhatsApp +91
 Business: GoFabrikos (Prop: Lakshmi Sowjanya Aaki)
 Address: 3rd Floor, Shop No. 346, Sri Vasavi Wholesale Cloth Merchant Society, Mangalagiri Road, Guntur – 522001, Andhra Pradesh
 Email: care@gofabrikos.com
-WhatsApp: +91 95817 34837`,
+WhatsApp: +91 82983 08314`,
   },
 ]
 

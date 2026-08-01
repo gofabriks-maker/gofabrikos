@@ -76,7 +76,7 @@ export default function WholesalePage() {
           </Link>
           <div className="flex items-center gap-4 text-sm text-stone-600">
             <Link href="/fabrics" className="hover:text-rose-700">Shop</Link>
-            <a href="tel:+919581734837" className="flex items-center gap-1.5 px-4 py-1.5 bg-rose-800 text-white rounded-full hover:bg-rose-900">
+            <a href="tel:+918298308314" className="flex items-center gap-1.5 px-4 py-1.5 bg-rose-800 text-white rounded-full hover:bg-rose-900">
               <Phone size={13} /> Call Us
             </a>
           </div>
@@ -184,7 +184,7 @@ export default function WholesalePage() {
                 </div>
                 <h3 className="text-xl font-bold text-stone-800 mb-2">Inquiry Received!</h3>
                 <p className="text-stone-500 text-sm">Our B2B team will contact you within 24 hours.</p>
-                <p className="text-stone-400 text-xs mt-1">WhatsApp: +91 95817 34837</p>
+                <p className="text-stone-400 text-xs mt-1">WhatsApp: +91 82983 08314</p>
               </div>
             ) : (
               <>
@@ -244,7 +244,7 @@ export default function WholesalePage() {
                   </button>
                 </form>
                 <div className="mt-5 flex items-center justify-center gap-6 text-sm text-stone-500">
-                  <a href="tel:+919581734837" className="flex items-center gap-1.5 hover:text-rose-700"><Phone size={14} /> +91 95817 34837</a>
+                  <a href="tel:+918298308314" className="flex items-center gap-1.5 hover:text-rose-700"><Phone size={14} /> +91 82983 08314</a>
                   <a href="mailto:care@gofabrikos.com" className="flex items-center gap-1.5 hover:text-rose-700"><Mail size={14} /> care@gofabrikos.com</a>
                 </div>
               </>

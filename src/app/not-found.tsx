@@ -58,7 +58,7 @@ export default function NotFound() {
 
       {/* WhatsApp help */}
       <a
-        href="https://wa.me/919581734837?text=Hi! I need help finding a fabric on GoFabrikos."
+        href="https://wa.me/918298308314?text=Hi! I need help finding a fabric on GoFabrikos."
         target="_blank"
         rel="noopener noreferrer"
         className="mt-10 inline-flex items-center gap-2 text-sm text-stone-400 hover:text-emerald-600 transition-colors"

@@ -154,7 +154,7 @@ export default function CartPage() {
       .map(item => `• ${item.name} — ${item.meters}m × ₹${item.price} = ₹${item.price * item.meters}`)
       .join('%0A')
     const msg = `Hi GoFabrikos! I want to place an order:%0A%0A${itemsList}%0A%0ASubtotal: ₹${subtotal}%0A${appliedCoupon ? `Coupon (${appliedCoupon.label}): -₹${couponDiscount}%0A` : ''}Shipping: ${shipping === 0 ? 'FREE' : `₹${shipping}`}%0A*Total: ₹${grandTotal}*%0A%0APlease confirm availability and payment details.`
-    return `https://wa.me/919581734837?text=${msg}`
+    return `https://wa.me/918298308314?text=${msg}`
   }
 
   if (cart.length === 0) {
@@ -529,7 +529,7 @@ export default function CartPage() {
       <footer className="mt-16 py-10 border-t bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
           <p className="font-semibold text-gray-600 mb-1">GoFabrikos | Prop: Lakshmi Sowjanya Aaki</p>
-          <p>Premium Indian Fabrics • WhatsApp: +91 95817 34837 • Guntur, Andhra Pradesh</p>
+          <p>Premium Indian Fabrics • WhatsApp: +91 82983 08314 • Guntur, Andhra Pradesh</p>
         </div>
       </footer>
     </div>

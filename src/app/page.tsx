@@ -151,7 +151,7 @@ export default function HomePage() {
                       🛒 Add to Cart
                     </button>
                     <a
-                      href={`https://wa.me/919581734837?text=Hi%2C%20I%20want%20to%20order%20${encodeURIComponent(p.name)}`}
+                      href={`https://wa.me/918298308314?text=Hi%2C%20I%20want%20to%20order%20${encodeURIComponent(p.name)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-9 h-9 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center justify-center text-sm transition-colors flex-shrink-0"

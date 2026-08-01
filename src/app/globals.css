@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #C8102E;
+  --primary-dark: #9A0C24;
+  --gold: #D4AF37;
+  --gold-light: #F0D97A;
+  --dark: #1A1A2E;
+  --dark2: #16213E;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #2D2D2D;
+  background: #FAFAF8;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-6 py-3 rounded-lg font-semibold text-sm
+           hover:bg-primary-dark transition-all duration-200
+           hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center gap-2;
+  }
+
+  .btn-gold {
+    @apply bg-gold text-dark px-6 py-3 rounded-lg font-bold text-sm
+           hover:bg-gold-light transition-all duration-200
+           hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center gap-2;
+  }
+
+  .btn-outline {
+    @apply border-2 border-current px-6 py-3 rounded-lg font-semibold text-sm
+           transition-all duration-200 inline-flex items-center gap-2;
+  }
+
+  .section-title {
+    @apply font-playfair text-3xl font-bold text-dark;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100
+           hover:shadow-md transition-shadow duration-200;
+  }
+
+  .input-field {
+    @apply w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+           focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+           placeholder:text-gray-400;
+  }
+
+  .badge {
+    @apply text-xs font-bold px-2.5 py-0.5 rounded-full;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #C8102E; border-radius: 3px; }
+
+/* Gold shimmer animation for hero text */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}

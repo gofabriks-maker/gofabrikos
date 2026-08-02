@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Building2, Check, Phone, Mail, FileText, ChevronDown, ChevronUp, Star } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 const TIERS = [
   {
@@ -61,8 +62,20 @@ export default function WholesalePage() {
   const [submitted, setSubmit] = useState(false)
   const [form, setForm] = useState({ business: '', gstin: '', name: '', mobile: '', email: '', volume: '', city: '', message: '' })
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const supabase = createClient()
+    await supabase.from('wholesale_enquiries').insert({
+      business_name: form.business,
+      contact_name:  form.name,
+      mobile:        form.mobile,
+      email:         form.email || null,
+      gstin:         form.gstin || null,
+      city:          form.city  || null,
+      monthly_volume: form.volume || null,
+      message:       form.message || null,
+      status:        'new',
+    })
     setSubmit(true)
   }
 
@@ -183,8 +196,15 @@ export default function WholesalePage() {
                   <Check size={28} className="text-emerald-600" />
                 </div>
                 <h3 className="text-xl font-bold text-stone-800 mb-2">Inquiry Received!</h3>
-                <p className="text-stone-500 text-sm">Our B2B team will contact you within 24 hours.</p>
-                <p className="text-stone-400 text-xs mt-1">WhatsApp: +91 82983 08314</p>
+                <p className="text-stone-500 text-sm mb-5">Our B2B team will contact you within 24 hours.</p>
+                <a
+                  href={`https://wa.me/918298308314?text=${encodeURIComponent(`Hi! I just submitted a B2B enquiry on GoFabrikos. My business is ${form.business} and I need ${form.volume || 'bulk'} fabric monthly. Please get in touch.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold text-sm transition-colors"
+                >
+                  <span>💬</span> Chat on WhatsApp Now
+                </a>
               </div>
             ) : (
               <>

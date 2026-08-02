@@ -58,8 +58,8 @@ function OrderSummary({ coupon, onCoupon }: { coupon: string; onCoupon: (c: stri
   const [msg, setMsg]   = useState('')
 
   function applyCode() {
-    if (code.toUpperCase() === 'NAARI5') {
-      onCoupon('NAARI5')
+    if (code.toUpperCase() === 'GOFA5') {
+      onCoupon('GOFA5')
       setMsg('✅ 5% discount applied!')
     } else {
       setMsg('❌ Invalid code')
@@ -96,7 +96,7 @@ function OrderSummary({ coupon, onCoupon }: { coupon: string; onCoupon: (c: stri
         </div>
         {coupon && (
           <div className="flex justify-between text-emerald-600">
-            <span>Discount (NAARI5)</span><span>-₹{Math.round(SUBTOTAL * 0.05).toLocaleString()}</span>
+            <span>Discount (GOFA5)</span><span>-₹{Math.round(SUBTOTAL * 0.05).toLocaleString()}</span>
           </div>
         )}
         <div className="flex justify-between font-bold text-base text-stone-900 pt-2 border-t border-stone-100">
@@ -122,14 +122,14 @@ function OrderSummary({ coupon, onCoupon }: { coupon: string; onCoupon: (c: stri
           </button>
         </div>
         {msg && <p className="text-xs mt-1.5 text-stone-600">{msg}</p>}
-        <p className="text-xs text-stone-400 mt-1">Try: NAARI5</p>
+        <p className="text-xs text-stone-400 mt-1">Try: GOFA5</p>
       </div>
 
       {/* Trust badges */}
       <div className="mt-4 pt-4 border-t border-stone-100 flex flex-col gap-1.5 text-xs text-stone-500">
         <div className="flex items-center gap-2"><Shield size={12} className="text-emerald-600" /> 100% Secure Payment</div>
         <div className="flex items-center gap-2"><Truck size={12} className="text-blue-500" /> GST Invoice on every order</div>
-        <div className="flex items-center gap-2"><Tag size={12} className="text-rose-500" /> Free Swatch on 1st order</div>
+        <div className="flex items-center gap-2"><Tag size={12} className="text-rose-500" /> Fabric Visualizer available</div>
       </div>
     </div>
   )

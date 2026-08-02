@@ -531,7 +531,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 </div>
                 <div className="flex items-start gap-2 text-xs text-gray-700">
                   <span className="text-lg leading-none">🎁</span>
-                  <span>Use code <strong className="text-rose-700">NAARI10</strong> → Get 10% off on first order</span>
+                  <span>Use code <strong className="text-rose-700">GOFA10</strong> → Get 10% off on first order</span>
                 </div>
                 <div className="flex items-start gap-2 text-xs text-gray-700">
                   <span className="text-lg leading-none">📦</span>

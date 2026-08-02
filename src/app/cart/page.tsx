@@ -128,8 +128,8 @@ export default function CartPage() {
   const mrpTotal = cart.reduce((sum, item) => sum + item.mrp * item.meters, 0)
   const totalSavings = mrpTotal - subtotal
   const COUPONS: Record<string, { pct: number; label: string; desc: string }> = {
-    NAARI5:  { pct: 0.05, label: 'NAARI5',  desc: '5% off on all orders' },
-    NAARI10: { pct: 0.10, label: 'NAARI10', desc: '10% off on first order' },
+    GOFA5:  { pct: 0.05, label: 'GOFA5',  desc: '5% off on all orders' },
+    GOFA10: { pct: 0.10, label: 'GOFA10', desc: '10% off on first order' },
     GOFAB15: { pct: 0.15, label: 'GOFAB15', desc: '15% off above ₹2000' },
   }
   const [appliedCoupon, setAppliedCoupon]   = useState<typeof COUPONS[string] | null>(null)
@@ -142,7 +142,7 @@ export default function CartPage() {
     const key = coupon.trim().toUpperCase()
     if (!key) { setCouponError('Please enter a coupon code'); return }
     const found = COUPONS[key]
-    if (!found) { setCouponError('Invalid code. Try NAARI5 or NAARI10'); return }
+    if (!found) { setCouponError('Invalid code. Try GOFA5 or GOFA10'); return }
     if (key === 'GOFAB15' && subtotal < 2000) { setCouponError('GOFAB15 requires order above ₹2000'); return }
     setAppliedCoupon(found)
     setCouponApplied(true)
@@ -395,7 +395,7 @@ export default function CartPage() {
                     type="text"
                     value={coupon}
                     onChange={e => { setCoupon(e.target.value); setCouponError('') }}
-                    placeholder="Try NAARI5, NAARI10, GOFAB15"
+                    placeholder="Try GOFA5, GOFA10, GOFAB15"
                     className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-400 transition-colors"
                     onKeyDown={e => e.key === 'Enter' && applyCoupon()}
                   />

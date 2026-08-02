@@ -458,7 +458,7 @@ export default function AdminPage() {
         {tab === 'swatches' && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Free Swatch Requests</h2>
+              <h2 className="font-semibold text-gray-900">Fabric Enquiries</h2>
               <p className="text-xs text-gray-500 mt-1">{swatches.length} total requests</p>
             </div>
             <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">

@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     description: `Buy ${name} fabric online at GoFabrikos. Priced per metre. Free swatch available. GST invoice on every order. Pan-India delivery.`,
     openGraph: {
       title: `${name} | GoFabrikos`,
-      description: `Buy ${name} fabric per metre at GoFabrikos. Free swatch. GST invoice. Pan-India delivery.`,
+      description: `Buy ${name} fabric per metre at GoFabrikos GST invoice. Pan-India delivery.`,
       url: `https://gofabrikos.com/fabrics/${params.slug}`,
       siteName: 'GoFabrikos',
       type: 'website',

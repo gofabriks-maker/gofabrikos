@@ -20,9 +20,9 @@ const FAQ_CATEGORIES = [
     emoji: '🧵',
     faqs: [
       { q: 'Are the fabrics authentic?', a: 'Yes. We source directly from certified weaver clusters — Chanderi, Varanasi, Kanchipuram, Surat, Jaipur, and 10+ other hubs. No imitations, no middlemen.' },
-      { q: 'How do I choose the right fabric?', a: 'Use our free swatch programme — request up to 3 fabric swatches (10×10 cm) delivered free. Also try our Fabric Visualizer to see how fabric looks on a mannequin.' },
+      { q: 'How do I choose the right fabric?', a: 'Use our Fabric Visualizer to see how fabric looks on a mannequin.' },
       { q: 'What does GSM mean?', a: 'GSM = Grams per Square Metre. It measures fabric weight/thickness. Higher GSM means heavier, thicker fabric (e.g., 180+ GSM for winter; 80–120 GSM for summer/sheer fabrics).' },
-      { q: 'Is the fabric colour accurate in photos?', a: 'We photograph fabrics under standard studio lighting. Minor colour variations can occur due to screen settings. Use the free swatch service for colour-critical decisions.' },
+      { q: 'Is the fabric colour accurate in photos?', a: 'We photograph fabrics under standard studio lighting. Minor colour variations can occur due to screen settings. Use our Fabric Visualizer to check colour and texture before buying.' },
       { q: 'What is the fabric width / selvedge-to-selvedge measurement?', a: 'Width varies by fabric type. Saree fabrics: typically 44–47 inches. Dress materials: 36–44 inches. Width is listed on each product page.' },
     ],
   },
@@ -48,10 +48,10 @@ const FAQ_CATEGORIES = [
     ],
   },
   {
-    cat: 'Free Swatch',
+    cat: 'Fabric Visualizer',
     emoji: '✂️',
     faqs: [
-      { q: 'What is the free swatch programme?', a: 'Request up to 3 fabric swatches (10×10 cm each) delivered to your doorstep — free on your first order. It helps you feel the texture and check colour before buying.' },
+      { q: 'What is the Fabric Visualizer?', a: 'GoFabrikos has India's first Ladies Fabric Frame Visualizer. Select any fabric from our collection and see exactly how it looks on a mannequin — before you buy. Available free at gofabrikos.com/visualizer.' },
       { q: 'How long do swatches take to arrive?', a: 'Swatches are dispatched within 1–2 business days and arrive in 3–5 days depending on your location.' },
       { q: 'Can I request more than 3 swatches?', a: 'The free programme allows up to 3 swatches per request per customer. Additional swatches are available at ₹10 each, adjusted against your order value.' },
     ],

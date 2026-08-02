@@ -42,12 +42,14 @@ export default function Footer() {
             <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-5">Shop</h4>
             <ul className="space-y-3">
               {[
-                ['All Fabrics',      '/fabrics'],
+                ['All Fabrics',       '/fabrics'],
                 ['Lehenga Fabrics',  '/fabrics?category=lehenga'],
                 ['Blouse Fabrics',   '/fabrics?category=blouse'],
                 ['Kurti Fabrics',    '/fabrics?category=kurti'],
+                ['Plain Fabrics',    '/fabrics?category=plain'],
                 ['Dupattas',         '/fabrics?category=dupatta'],
                 ['Designer Sarees',  '/fabrics?category=saree'],
+                ['Men Kurta Fabrics','/fabrics?category=men-kurta'],
                 ['B2B Wholesale',    '/wholesale'],
               ].map(([label, href]) => (
                 <li key={href}>

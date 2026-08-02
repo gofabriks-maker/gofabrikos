@@ -10,14 +10,15 @@ import { createClient } from '@/lib/supabase/client'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 const navLinks = [
-  { label: 'All Fabrics',     href: '/fabrics' },
-  { label: 'Lehenga Fabrics', href: '/fabrics?category=lehenga' },
-  { label: 'Blouse Fabrics',  href: '/fabrics?category=blouse' },
-  { label: 'Kurti Fabrics',   href: '/fabrics?category=kurti' },
-  { label: 'Dupattas',        href: '/fabrics?category=dupatta' },
-  { label: 'Designer Sarees', href: '/fabrics?category=saree' },
-  { label: '👗 Visualizer',   href: '/visualizer' },
-  { label: 'B2B Wholesale',   href: '/b2b' },
+  { label: 'All Fabrics',       href: '/fabrics' },
+  { label: 'Lehenga Fabrics',   href: '/fabrics?category=lehenga' },
+  { label: 'Blouse Fabrics',    href: '/fabrics?category=blouse' },
+  { label: 'Kurti Fabrics',     href: '/fabrics?category=kurti' },
+  { label: 'Plain Fabrics',     href: '/fabrics?category=plain' },
+  { label: 'Dupattas',          href: '/fabrics?category=dupatta' },
+  { label: 'Designer Sarees',   href: '/fabrics?category=saree' },
+  { label: '👗 Visualizer',     href: '/visualizer' },
+  { label: 'B2B Wholesale',     href: '/b2b' },
 ]
 
 export default function Header() {

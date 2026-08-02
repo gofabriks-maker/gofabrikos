@@ -45,13 +45,20 @@ export default function NotFound() {
       {/* Popular categories */}
       <div className="text-xs text-stone-400 mb-3 uppercase tracking-wider">Popular Categories</div>
       <div className="flex flex-wrap gap-2 justify-center max-w-md">
-        {['Chanderi', 'Banarasi', 'Kanjivaram', 'Linen', 'Cotton Ikat', 'Raw Silk'].map(cat => (
+        {[
+          { label: 'Lehenga Fabrics', slug: 'lehenga' },
+          { label: 'Blouse Fabrics',  slug: 'blouse' },
+          { label: 'Kurti Fabrics',   slug: 'kurti' },
+          { label: 'Plain Fabrics',   slug: 'plain' },
+          { label: 'Dupattas',        slug: 'dupatta' },
+          { label: 'Designer Sarees', slug: 'saree' },
+        ].map(({ label, slug }) => (
           <Link
-            key={cat}
-            href={`/fabrics?category=${cat}`}
+            key={slug}
+            href={`/fabrics?category=${slug}`}
             className="px-3 py-1.5 rounded-full bg-white border border-stone-200 text-stone-600 text-xs hover:border-rose-300 hover:text-rose-600 transition-colors"
           >
-            {cat}
+            {label}
           </Link>
         ))}
       </div>

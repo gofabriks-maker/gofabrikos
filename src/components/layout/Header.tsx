@@ -9,13 +9,14 @@ import { createClient } from '@/lib/supabase/client'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 const navLinks = [
-  { label: 'All Fabrics', href: '/fabrics' },
-  { label: 'Saree Fabrics', href: '/fabrics?category=saree' },
-  { label: 'Blouse Fabrics', href: '/fabrics?category=blouse' },
-  { label: 'Lehenga', href: '/fabrics?category=lehenga' },
-  { label: '👗 Visualizer', href: '/visualizer' },
-  { label: 'B2B Wholesale', href: '/b2b' },
-  { label: 'Free Swatch', href: '/swatches' },
+  { label: 'All Fabrics',     href: '/fabrics' },
+  { label: 'Lehenga Fabrics', href: '/fabrics?category=lehenga' },
+  { label: 'Blouse Fabrics',  href: '/fabrics?category=blouse' },
+  { label: 'Kurti Fabrics',   href: '/fabrics?category=kurti' },
+  { label: 'Dupattas',        href: '/fabrics?category=dupatta' },
+  { label: 'Designer Sarees', href: '/fabrics?category=saree' },
+  { label: '👗 Visualizer',   href: '/visualizer' },
+  { label: 'B2B Wholesale',   href: '/b2b' },
 ]
 
 export default function Header() {
@@ -55,7 +56,7 @@ export default function Header() {
     <>
       {/* Announcement Strip */}
       <div className="bg-primary text-white text-center text-xs py-2 px-4 font-medium tracking-wide">
-        <span className="mx-3">🎁 FREE SWATCH on first order</span>
+        <span className="mx-3">✨ First Order Special Prices — Shop Now</span>
         <span className="hidden sm:inline">|</span>
         <span className="mx-3 hidden sm:inline">🚚 Free shipping above ₹999</span>
         <span className="hidden md:inline">|</span>

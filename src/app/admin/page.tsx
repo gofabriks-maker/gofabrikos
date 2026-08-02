@@ -45,6 +45,17 @@ interface SwatchRequest {
   created_at: string
 }
 
+interface ContactMessage {
+  id: number
+  name: string
+  mobile: string
+  email?: string
+  subject: string
+  message: string
+  status: string
+  created_at: string
+}
+
 interface WholesaleEnquiry {
   id: number
   business_name: string
@@ -103,6 +114,8 @@ const MOCK_SWATCHES: SwatchRequest[] = [
   { id:3, name:'Radhika Krishnan', mobile:'7766554433', city:'Chennai',      status:'delivered',  created_at:'2026-07-22T10:00:00Z' },
 ]
 
+const MOCK_CONTACTS: ContactMessage[] = []
+
 const MOCK_WHOLESALE: WholesaleEnquiry[] = [
   { id:1, business_name:'Sree Textiles',   contact_name:'Ravi Kumar',   mobile:'9876501234', city:'Vijayawada', monthly_volume:'₹2–5L', status:'new',       created_at:'2026-07-27T09:00:00Z' },
   { id:2, business_name:'Rani Boutique',   contact_name:'Rani Devi',    mobile:'8765012345', city:'Guntur',     monthly_volume:'₹50K–1L',status:'contacted', created_at:'2026-07-25T14:00:00Z' },
@@ -118,11 +131,12 @@ function fmtCur(n: number) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [tab, setTab] = useState<'overview'|'orders'|'products'|'swatches'|'wholesale'>('overview')
+  const [tab, setTab] = useState<'overview'|'orders'|'products'|'swatches'|'wholesale'|'messages'>('overview')
   const [orders, setOrders]       = useState<Order[]>(MOCK_ORDERS)
   const [products, setProducts]   = useState<Product[]>(MOCK_PRODUCTS)
   const [swatches, setSwatches]   = useState<SwatchRequest[]>(MOCK_SWATCHES)
   const [wholesale, setWholesale] = useState<WholesaleEnquiry[]>(MOCK_WHOLESALE)
+  const [contacts,  setContacts]  = useState<ContactMessage[]>(MOCK_CONTACTS)
   const [search, setSearch]       = useState('')
   const [editingProduct, setEditingProduct] = useState<number|null>(null)
   const [editPrice, setEditPrice]  = useState('')
@@ -136,16 +150,18 @@ export default function AdminPage() {
       try {
         const { createClient } = await import('@/lib/supabase/client')
         const sb = createClient()
-        const [{ data: ord }, { data: prod }, { data: sw }, { data: ws }] = await Promise.all([
+        const [{ data: ord }, { data: prod }, { data: sw }, { data: ws }, { data: cm }] = await Promise.all([
           sb.from('orders').select('*').order('created_at', { ascending: false }),
           sb.from('products').select('id,slug,name,price,stock_left,is_active,category,rating,ratings_count').order('id'),
           sb.from('swatch_requests').select('*').order('created_at', { ascending: false }),
           sb.from('wholesale_enquiries').select('*').order('created_at', { ascending: false }),
+          sb.from('contact_messages').select('*').order('created_at', { ascending: false }),
         ])
         if (ord  && ord.length  > 0) setOrders(ord as Order[])
         if (prod && prod.length > 0) setProducts(prod as Product[])
         if (sw   && sw.length   > 0) setSwatches(sw as SwatchRequest[])
         if (ws   && ws.length   > 0) setWholesale(ws as WholesaleEnquiry[])
+        if (cm   && cm.length   > 0) setContacts(cm as ContactMessage[])
       } catch { /* use mock data */ }
     }
     load()
@@ -193,6 +209,7 @@ export default function AdminPage() {
   const pendingOrders  = orders.filter(o => !['delivered','cancelled'].includes(o.status)).length
   const lowStock       = products.filter(p => p.stock_left < 15).length
   const newEnquiries   = wholesale.filter(w => w.status === 'new').length
+  const newMessages    = contacts.filter(c => c.status === 'new').length
 
   const TABS = [
     { key:'overview',   label:'Overview',   icon:<BarChart2 size={15}/> },
@@ -200,6 +217,7 @@ export default function AdminPage() {
     { key:'products',   label:'Products',   icon:<Package size={15}/>,    badge: lowStock },
     { key:'swatches',   label:'Swatches',   icon:<Star size={15}/> },
     { key:'wholesale',  label:'Wholesale',  icon:<Users size={15}/>,      badge: newEnquiries },
+    { key:'messages',   label:'Messages',   icon:<Mail size={15}/>,        badge: newMessages || undefined },
   ]
 
   const filteredOrders   = orders.filter(o =>
@@ -527,6 +545,48 @@ export default function AdminPage() {
               </tbody>
             </table></div>
             {wholesale.length === 0 && <div className="text-center py-12 text-gray-400">No wholesale enquiries yet</div>}
+          </div>
+        )}
+
+        {tab === 'messages' && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900">Contact Messages</h2>
+              <p className="text-xs text-gray-500 mt-1">{contacts.length} total messages{newMessages > 0 ? ` · ${newMessages} new` : ''}</p>
+            </div>
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[700px]">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  {['Name','Mobile','Subject','Message','Status','Date'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {contacts.map(c => (
+                  <tr key={c.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{c.name}</td>
+                    <td className="px-4 py-3">
+                      <a href={`https://wa.me/91${c.mobile.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
+                        className="text-emerald-600 hover:underline flex items-center gap-1">
+                        <Phone size={12}/> {c.mobile}
+                      </a>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 text-xs">{c.subject}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px] truncate" title={c.message}>{c.message}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        c.status === 'replied' ? 'bg-green-100 text-green-700' :
+                        c.status === 'read'    ? 'bg-blue-100 text-blue-700' :
+                        c.status === 'closed'  ? 'bg-gray-100 text-gray-600' :
+                        'bg-amber-100 text-amber-700'}`}>{c.status}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{fmt(c.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table></div>
+            {contacts.length === 0 && <div className="text-center py-12 text-gray-400">No contact messages yet</div>}
           </div>
         )}
 

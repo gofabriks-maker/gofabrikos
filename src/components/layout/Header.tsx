@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ShoppingBag, Heart, Search, Menu, X, ChevronDown, User, LogOut } from 'lucide-react'
 import { useWishlist } from '@/hooks/useWishlist'
@@ -70,9 +71,14 @@ export default function Header() {
 
             {/* Logo */}
             <Link href="/" className="flex-shrink-0">
-              <span className="font-playfair text-2xl font-bold text-primary">
-                Go<span className="text-gold">Fabrikos</span>
-              </span>
+              <Image
+                src="/logo.png"
+                alt="GoFabrikos"
+                width={160}
+                height={52}
+                className="h-12 w-auto"
+                priority
+              />
             </Link>
 
             {/* Desktop Nav */}

@@ -8,6 +8,10 @@ export const metadata: Metadata = {
     default: "GoFabrikos – India's Finest Fabrics | Buy Fabric Online",
     template: '%s | GoFabrikos',
   },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
   description: "Shop 2400+ premium Indian fabrics – Chanderi, Silk, Cotton, Georgette. Priced per meter. Free swatch. GST invoice. Pan-India delivery from Guntur, Andhra Pradesh.",
   keywords: "buy fabric online, chanderi fabric, silk fabric India, blouse fabric, saree fabric, fabric per meter, kanjivaram silk, banarasi fabric, GoFabrikos",
   authors: [{ name: 'GoFabrikos' }],

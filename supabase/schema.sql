@@ -208,3 +208,22 @@ CREATE POLICY "Anyone can subscribe" ON subscribers
   FOR INSERT WITH CHECK (true);
 CREATE POLICY "Admin can read subscribers" ON subscribers
   FOR SELECT USING (auth.role() = 'service_role');
+
+-- ── Contact Messages ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id         BIGSERIAL PRIMARY KEY,
+  name       TEXT NOT NULL,
+  mobile     TEXT NOT NULL,
+  email      TEXT,
+  subject    TEXT NOT NULL,
+  message    TEXT NOT NULL,
+  status     TEXT NOT NULL DEFAULT 'new'
+             CHECK (status IN ('new','read','replied','closed')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can insert contact message" ON contact_messages
+  FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admin can read contact messages" ON contact_messages
+  FOR SELECT USING (auth.role() = 'service_role');

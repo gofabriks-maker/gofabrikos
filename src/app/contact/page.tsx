@@ -199,8 +199,8 @@ export default function ContactPage() {
                       <option>Order enquiry</option>
                       <option>Fabric question</option>
                       <option>Wholesale / B2B</option>
-                      <option>Swatch request</option>
                       <option>Return / refund</option>
+                      <option>Fabric Visualizer help</option>
                       <option>Other</option>
                     </select>
                   </div>

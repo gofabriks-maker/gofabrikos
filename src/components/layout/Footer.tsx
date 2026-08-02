@@ -11,10 +11,10 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-12">
 
           {/* Brand */}
-          <div className="lg:col-span-2 md:col-span-2">
+          <div className="col-span-2 md:col-span-3 lg:col-span-1">
             <Link href="/" className="font-playfair text-2xl font-bold text-primary block mb-3">
               Go<span className="text-gold">Fabrikos</span>
             </Link>

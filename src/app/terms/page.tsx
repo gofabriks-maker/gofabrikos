@@ -25,7 +25,7 @@ Phone: +91 82983 08314`,
 
 We reserve the right to change prices at any time without prior notice. The price at the time of placing your order is the price you pay.
 
-Product images and descriptions are provided in good faith. Minor colour variations may occur due to screen settings and photography. We recommend ordering a free swatch before purchasing large quantities.
+Product images and descriptions are provided in good faith. Minor colour variations may occur due to screen settings and photography. We recommend using our Fabric Visualizer before purchasing large quantities.
 
 All products are subject to availability. In the rare case a product becomes unavailable after your order, we will notify you and offer a full refund or alternative.`,
   },

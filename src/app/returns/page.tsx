@@ -87,7 +87,7 @@ export default function ReturnsPage() {
                   'Fabric that has been washed or dry-cleaned',
                   'Fabric without original tags or packaging',
                   'Customised or made-to-order items',
-                  'Free swatch orders',
+                  'Used or washed fabric',
                 ].map(item => (
                   <div key={item} className="flex items-start gap-2">
                     <XCircle size={15} className="text-red-400 flex-shrink-0 mt-0.5" />

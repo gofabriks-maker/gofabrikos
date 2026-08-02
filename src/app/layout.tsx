@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
-  description: "Shop 2400+ premium Indian fabrics – Chanderi, Silk, Cotton, Georgette. Priced per meter. Free swatch. GST invoice. Pan-India delivery from Guntur, Andhra Pradesh.",
+  description: "Shop 2400+ premium Indian fabrics – Chanderi, Silk, Cotton, Georgette. Priced per meter. GST invoice on every order. Pan-India delivery from Guntur, Andhra Pradesh.",
   keywords: "buy fabric online, chanderi fabric, silk fabric India, blouse fabric, saree fabric, fabric per meter, kanjivaram silk, banarasi fabric, GoFabrikos",
   authors: [{ name: 'GoFabrikos' }],
   creator: 'GoFabrikos',
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "GoFabrikos – India's Finest Fabrics",
-    description: "Shop 2400+ premium Indian fabrics priced per meter. Free swatch. GST invoice. Pan-India delivery.",
+    description: "Shop 2400+ premium Indian fabrics priced per meter. GST invoice on every order. Pan-India delivery.",
     url: "https://gofabrikos.com",
     siteName: "GoFabrikos",
     type: "website",

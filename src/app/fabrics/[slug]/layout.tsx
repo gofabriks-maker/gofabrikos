@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     .join(' ')
   return {
     title: `${name} | Buy Online at GoFabrikos`,
-    description: `Buy ${name} fabric online at GoFabrikos. Priced per metre. Free swatch available. GST invoice on every order. Pan-India delivery.`,
+    description: `Buy ${name} fabric online at GoFabrikos. Priced per metre. GST invoice on every order. Pan-India delivery.`,
     openGraph: {
       title: `${name} | GoFabrikos`,
       description: `Buy ${name} fabric per metre at GoFabrikos GST invoice. Pan-India delivery.`,

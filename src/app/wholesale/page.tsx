@@ -9,7 +9,7 @@ const TIERS = [
     min: '1 m',
     max: '49 m',
     discount: '0%',
-    perks: ['Standard pricing', 'GST invoice', 'Free swatch on 1st order'],
+    perks: ['Standard pricing', 'GST invoice', 'Pan-India delivery'],
     highlight: false,
     color: 'border-stone-200',
   },
@@ -46,7 +46,7 @@ const FAQS = [
   { q: 'What is the minimum order for B2B?', a: 'Minimum 50 metres per fabric for B2B pricing. Mix-and-match across fabrics is allowed.' },
   { q: 'Do you provide GST invoices?', a: 'Yes, GST invoice is mandatory on all orders — B2B and retail both. GSTIN can be updated in your account.' },
   { q: 'What are the payment terms?', a: 'Silver tier is advance payment. Gold gets 15-day credit. Platinum gets 30-day credit after 3 successful orders.' },
-  { q: 'Can we order fabric samples?', a: 'Yes, swatches of 10×10 cm are available at ₹10/swatch (adjusted against order). First swatch is free.' },
+  { q: 'Can we order fabric samples?', a: 'Yes, fabric samples of 10×10 cm are available at ₹10/sample (adjusted against your order value).' },
   { q: 'Do you ship pan-India?', a: 'Yes. Platinum tier gets free delivery. Others pay actuals via DTDC/Blue Dart. Export enquiries welcome.' },
 ]
 

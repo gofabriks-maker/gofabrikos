@@ -8,6 +8,33 @@ import type { ProductRow } from '@/types/database'
 import { useWishlist } from '@/hooks/useWishlist'
 
 const SORT_OPTIONS = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Top Rated', 'Most Reviewed']
+
+// Fixed category list — always shown regardless of product count
+const FIXED_CATEGORIES = [
+  'All',
+  'Lehenga Fabrics',
+  'Blouse Fabrics',
+  'Kurti Fabrics',
+  'Plain Fabrics',
+  'Dupattas',
+  'Designer Sarees',
+  'Men Kurta Fabrics',
+  'Laces',
+  'Fabric Add-ons',
+]
+
+const CATEGORY_PARAM_MAP: Record<string, string> = {
+  lehenga:     'Lehenga Fabrics',
+  blouse:      'Blouse Fabrics',
+  kurti:       'Kurti Fabrics',
+  plain:       'Plain Fabrics',
+  dupatta:     'Dupattas',
+  saree:       'Designer Sarees',
+  'men-kurta': 'Men Kurta Fabrics',
+  laces:       'Laces',
+  addons:      'Fabric Add-ons',
+}
+
 const PRICE_RANGES = [
   { label: 'All Prices', min: 0, max: 99999 },
   { label: 'Under ₹150/m', min: 0, max: 150 },
@@ -17,7 +44,6 @@ const PRICE_RANGES = [
 ]
 
 export default function FabricsClient({ initialProducts }: { initialProducts: ProductRow[] }) {
-  const categories  = ['All', ...Array.from(new Set(initialProducts.map(p => p.category)))]
   const fabricTypes = ['All Types', ...Array.from(new Set(initialProducts.map(p => p.fabric_type)))]
   const searchParams = useSearchParams()
 
@@ -30,10 +56,16 @@ export default function FabricsClient({ initialProducts }: { initialProducts: Pr
   const [filterOpen,       setFilterOpen]        = useState(false)
   const { isWishlisted, toggleWishlist } = useWishlist()
 
-  // Sync search box when URL ?q= param changes (e.g. from header search)
+  // Sync search + category from URL params
   useEffect(() => {
-    const q = searchParams.get('q') ?? ''
+    const q   = searchParams.get('q') ?? ''
+    const cat = searchParams.get('category') ?? ''
     setSearchQuery(q)
+    if (cat && CATEGORY_PARAM_MAP[cat]) {
+      setSelectedCategory(CATEGORY_PARAM_MAP[cat])
+    } else if (!cat) {
+      setSelectedCategory('All')
+    }
   }, [searchParams])
 
   const filtered = useMemo(() => {
@@ -97,7 +129,7 @@ export default function FabricsClient({ initialProducts }: { initialProducts: Pr
 
           {/* Category Pills */}
           <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
-            {categories.map(cat => (
+            {FIXED_CATEGORIES.map(cat => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}

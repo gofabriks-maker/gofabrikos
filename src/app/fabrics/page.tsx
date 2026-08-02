@@ -12,7 +12,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 1, slug: 'mull-chanderi-digital-print', name: 'Mull Chanderi Digital Print',
     full_name: 'Mull Chanderi Digital Print — Ivory & Rose', price: 125, original_price: 160, discount: 22,
-    category: 'Chanderi', fabric_type: 'Chanderi Silk-Cotton', print_type: 'Digital Print', gsm: 90,
+    category: 'Lehenga Fabrics', fabric_type: 'Chanderi Silk-Cotton', print_type: 'Digital Print', gsm: 90,
     composition: '70% Cotton 30% Silk', season: 'All Season', wash_care: 'Dry clean recommended',
     description: 'Lightweight Mull Chanderi with contemporary digital floral print.', metres_per_garment: 5.5,
     rating: 4.7, ratings_count: 312, stock_left: 65, is_new_arrival: true, is_trending: false, is_active: true,
@@ -25,7 +25,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 2, slug: 'pure-silk-banarasi-brocade', name: 'Pure Silk Banarasi Brocade',
     full_name: 'Pure Silk Banarasi Brocade — Gold Zari', price: 850, original_price: 1100, discount: 23,
-    category: 'Banarasi', fabric_type: 'Pure Silk', print_type: 'Brocade Weave', gsm: 180,
+    category: 'Designer Sarees', fabric_type: 'Pure Silk', print_type: 'Brocade Weave', gsm: 180,
     composition: '100% Pure Silk', season: 'Winter & Festive', wash_care: 'Dry clean only',
     description: 'Authentic Banarasi brocade with real gold zari work.', metres_per_garment: 6.5,
     rating: 4.9, ratings_count: 187, stock_left: 28, is_new_arrival: false, is_trending: true, is_active: true,
@@ -38,7 +38,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 3, slug: 'handloom-khadi-cotton', name: 'Handloom Khadi Cotton',
     full_name: 'Handloom Khadi Cotton — Natural Cream', price: 280, original_price: 340, discount: 18,
-    category: 'Khadi', fabric_type: 'Khadi Cotton', print_type: 'Plain / Handloom', gsm: 120,
+    category: 'Plain Fabrics', fabric_type: 'Khadi Cotton', print_type: 'Plain / Handloom', gsm: 120,
     composition: '100% Cotton', season: 'All Season', wash_care: 'Machine wash cold',
     description: 'Hand-spun and hand-woven Khadi cotton from certified KVIC artisans.', metres_per_garment: 5.0,
     rating: 4.6, ratings_count: 98, stock_left: 90, is_new_arrival: false, is_trending: false, is_active: true,
@@ -51,7 +51,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 4, slug: 'kanjivaram-pure-silk', name: 'Kanjivaram Pure Silk',
     full_name: 'Kanjivaram Pure Silk — Temple Border', price: 1200, original_price: 1500, discount: 20,
-    category: 'Kanjivaram', fabric_type: 'Pure Mulberry Silk', print_type: 'Temple Border Weave', gsm: 220,
+    category: 'Lehenga Fabrics', fabric_type: 'Pure Mulberry Silk', print_type: 'Temple Border Weave', gsm: 220,
     composition: '100% Mulberry Silk', season: 'Wedding & Festive', wash_care: 'Dry clean only',
     description: 'Authentic Kanjivaram silk with traditional temple border.', metres_per_garment: 7.0,
     rating: 4.9, ratings_count: 256, stock_left: 18, is_new_arrival: false, is_trending: true, is_active: true,
@@ -64,7 +64,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 5, slug: 'georgette-embroidered', name: 'Georgette Embroidered',
     full_name: 'Georgette Embroidered — Floral Sequin', price: 320, original_price: 420, discount: 24,
-    category: 'Georgette', fabric_type: 'Georgette', print_type: 'Embroidered', gsm: 80,
+    category: 'Blouse Fabrics', fabric_type: 'Georgette', print_type: 'Embroidered', gsm: 80,
     composition: '100% Polyester', season: 'All Season', wash_care: 'Hand wash cold',
     description: 'Flowing georgette with delicate floral embroidery and sequin work.', metres_per_garment: 3.5,
     rating: 4.5, ratings_count: 143, stock_left: 55, is_new_arrival: true, is_trending: false, is_active: true,
@@ -77,7 +77,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 6, slug: 'linen-slub-plain', name: 'Linen Slub Plain',
     full_name: 'Linen Slub Plain — Natural Sand', price: 380, original_price: 460, discount: 17,
-    category: 'Linen', fabric_type: 'Pure Linen', print_type: 'Plain Slub', gsm: 140,
+    category: 'Kurti Fabrics', fabric_type: 'Pure Linen', print_type: 'Plain Slub', gsm: 140,
     composition: '100% Linen', season: 'Summer & Spring', wash_care: 'Machine wash gentle',
     description: 'Premium linen with natural slub texture. Breathable, cool fabric.', metres_per_garment: 3.0,
     rating: 4.6, ratings_count: 89, stock_left: 72, is_new_arrival: false, is_trending: false, is_active: true,
@@ -90,7 +90,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 7, slug: 'cotton-ikat-double', name: 'Cotton Ikat Double',
     full_name: 'Cotton Ikat Double — Pochampally Weave', price: 450, original_price: 580, discount: 22,
-    category: 'Ikat', fabric_type: 'Cotton', print_type: 'Double Ikat', gsm: 130,
+    category: 'Dupattas', fabric_type: 'Cotton', print_type: 'Double Ikat', gsm: 130,
     composition: '100% Cotton', season: 'All Season', wash_care: 'Machine wash cold',
     description: 'Traditional Pochampally double ikat. Each piece is unique.', metres_per_garment: 5.5,
     rating: 4.7, ratings_count: 134, stock_left: 40, is_new_arrival: false, is_trending: true, is_active: true,
@@ -103,7 +103,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 8, slug: 'mysore-silk-plain', name: 'Mysore Silk Plain',
     full_name: 'Mysore Silk Plain — Satin Finish', price: 680, original_price: 820, discount: 17,
-    category: 'Mysore Silk', fabric_type: 'Mysore Silk', print_type: 'Plain Satin', gsm: 160,
+    category: 'Designer Sarees', fabric_type: 'Mysore Silk', print_type: 'Plain Satin', gsm: 160,
     composition: '100% Silk', season: 'All Season', wash_care: 'Dry clean only',
     description: 'Karnataka Silk Industries certified Mysore Crepe Silk.', metres_per_garment: 6.0,
     rating: 4.8, ratings_count: 78, stock_left: 35, is_new_arrival: true, is_trending: false, is_active: true,
@@ -116,7 +116,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 9, slug: 'handblock-dabu-print-cotton', name: 'Handblock Dabu Print Cotton',
     full_name: 'Handblock Dabu Print Cotton — Indigo Resist', price: 380, original_price: 480, discount: 21,
-    category: 'Block Print', fabric_type: 'Cotton', print_type: 'Handblock / Dabu Print', gsm: 110,
+    category: 'Kurti Fabrics', fabric_type: 'Cotton', print_type: 'Handblock / Dabu Print', gsm: 110,
     composition: '100% Cotton', season: 'All Season', wash_care: 'Machine wash cold',
     description: 'Jaipur mud-resist Dabu print on soft cotton. Each piece is handblocked.', metres_per_garment: 3.0,
     rating: 4.6, ratings_count: 112, stock_left: 58, is_new_arrival: false, is_trending: false, is_active: true,
@@ -129,7 +129,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 10, slug: 'pashmina-wool-blend', name: 'Pashmina Wool Blend',
     full_name: 'Pashmina Wool Blend — Winter Heritage', price: 950, original_price: 1200, discount: 21,
-    category: 'Pashmina', fabric_type: 'Pashmina Wool', print_type: 'Woven', gsm: 200,
+    category: 'Dupattas', fabric_type: 'Pashmina Wool', print_type: 'Woven', gsm: 200,
     composition: '70% Pashmina 30% Merino Wool', season: 'Winter', wash_care: 'Dry clean only',
     description: 'Exquisite pashmina-merino blend from Kashmir. Ultra-soft warmth.', metres_per_garment: 3.5,
     rating: 4.9, ratings_count: 67, stock_left: 22, is_new_arrival: false, is_trending: false, is_active: true,
@@ -142,7 +142,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 11, slug: 'sambalpuri-ikat-silk', name: 'Sambalpuri Ikat Silk',
     full_name: 'Sambalpuri Ikat Silk — Odisha GI-Tagged', price: 780, original_price: 980, discount: 20,
-    category: 'Ikat', fabric_type: 'Silk-Cotton', print_type: 'Single Ikat Weave', gsm: 170,
+    category: 'Dupattas', fabric_type: 'Silk-Cotton', print_type: 'Single Ikat Weave', gsm: 170,
     composition: '60% Silk 40% Cotton', season: 'All Season', wash_care: 'Dry clean recommended',
     description: 'GI-tagged Sambalpuri ikat from Odisha. Traditional motifs by master craftsmen.', metres_per_garment: 6.0,
     rating: 4.8, ratings_count: 91, stock_left: 30, is_new_arrival: true, is_trending: false, is_active: true,
@@ -155,7 +155,7 @@ const FALLBACK_PRODUCTS: ProductRow[] = [
   {
     id: 12, slug: 'raw-silk-dupion', name: 'Raw Silk Dupion',
     full_name: 'Raw Silk Dupion — Textured Sheen', price: 520, original_price: 650, discount: 20,
-    category: 'Raw Silk', fabric_type: 'Dupion Silk', print_type: 'Plain', gsm: 150,
+    category: 'Blouse Fabrics', fabric_type: 'Dupion Silk', print_type: 'Plain', gsm: 150,
     composition: '100% Raw Silk', season: 'All Season', wash_care: 'Dry clean only',
     description: 'Textured dupion silk with characteristic slub weave and natural sheen.', metres_per_garment: 2.5,
     rating: 4.7, ratings_count: 103, stock_left: 45, is_new_arrival: false, is_trending: true, is_active: true,

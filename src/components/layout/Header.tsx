@@ -67,16 +67,16 @@ export default function Header() {
       {/* Main Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16 gap-6">
+          <div className="flex items-center h-16 gap-4">
 
             {/* Logo */}
             <Link href="/" className="flex-shrink-0">
               <Image
                 src="/logo.png"
                 alt="GoFabrikos"
-                width={160}
-                height={52}
-                className="h-12 w-auto"
+                width={220}
+                height={180}
+                className="h-14 w-auto"
                 priority
               />
             </Link>

@@ -51,7 +51,7 @@ const FAQ_CATEGORIES = [
     cat: 'Fabric Visualizer',
     emoji: '✂️',
     faqs: [
-      { q: 'What is the Fabric Visualizer?', a: 'GoFabrikos has India's first Ladies Fabric Frame Visualizer. Select any fabric from our collection and see exactly how it looks on a mannequin — before you buy. Available free at gofabrikos.com/visualizer.' },
+      { q: 'What is the Fabric Visualizer?', a: "GoFabrikos has India's first Ladies Fabric Frame Visualizer. Select any fabric from our collection and see exactly how it looks on a mannequin — before you buy. Available free at gofabrikos.com/visualizer." },
       { q: 'How long do swatches take to arrive?', a: 'Swatches are dispatched within 1–2 business days and arrive in 3–5 days depending on your location.' },
       { q: 'Can I request more than 3 swatches?', a: 'The free programme allows up to 3 swatches per request per customer. Additional swatches are available at ₹10 each, adjusted against your order value.' },
     ],

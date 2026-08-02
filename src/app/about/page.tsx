@@ -255,7 +255,7 @@ export default function AboutPage() {
               { icon: <Truck size={24} className="text-blue-600" />, title: 'Free Shipping', desc: 'On all orders above ₹999. Fast dispatch within 24-48 hours.' },
               { icon: <Shield size={24} className="text-green-600" />, title: 'GST Invoice', desc: 'Proper GST invoice on every order. Perfect for boutiques and designers.' },
               { icon: <RotateCcw size={24} className="text-purple-600" />, title: '7-Day Returns', desc: "Not satisfied? Return within 7 days, no questions asked." },
-              { icon: <Star size={24} className="text-yellow-500 fill-yellow-400" />, title: 'Fabric Visualizer', desc: 'See how fabric looks on a mannequin before buying — India's first ladies fabric visualizer.' },
+              { icon: <Star size={24} className="text-yellow-500 fill-yellow-400" />, title: 'Fabric Visualizer', desc: "See how fabric looks on a mannequin before buying — India's first ladies fabric visualizer." },
               { icon: <MessageCircle size={24} className="text-green-500" />, title: 'WhatsApp Support', desc: 'Real humans on WhatsApp, Mon–Sat 8AM to 9PM. Instant responses.' },
               { icon: <Award size={24} className="text-red-600" />, title: 'Certified Authentic', desc: 'Every fabric is verified for authenticity. No imitations, ever.' },
             ].map(item => (

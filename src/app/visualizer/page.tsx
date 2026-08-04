@@ -141,21 +141,6 @@ export default function VisualizerPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
-      {/* ── Nav ─────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-stone-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-rose-800 tracking-wide">
-            Go<span className="text-stone-400 font-light">Fabrikos</span>
-          </Link>
-          <div className="flex items-center gap-4 text-sm text-stone-600">
-            <Link href="/fabrics" className="hover:text-rose-700">Fabrics</Link>
-            <Link href="/cart" className="hover:text-rose-700 flex items-center gap-1">
-              <ShoppingBag size={16} /> Cart
-            </Link>
-          </div>
-        </div>
-      </nav>
-
       {/* ── Hero title ──────────────────────────────────────── */}
       <div className="bg-white border-b border-stone-200 py-5 text-center">
         <h1 className="text-2xl font-bold text-stone-800 flex items-center justify-center gap-2">

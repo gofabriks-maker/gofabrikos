@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import Link from 'next/link'
 import { Building2, Check, Phone, Mail, FileText, ChevronDown, ChevronUp, Star } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -82,21 +81,6 @@ export default function WholesalePage() {
 
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-stone-200">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-rose-800 tracking-wide">
-            Go<span className="text-stone-400 font-light">Fabrikos</span>
-          </Link>
-          <div className="flex items-center gap-4 text-sm text-stone-600">
-            <Link href="/fabrics" className="hover:text-rose-700">Shop</Link>
-            <a href="tel:+918298308314" className="flex items-center gap-1.5 px-4 py-1.5 bg-rose-800 text-white rounded-full hover:bg-rose-900">
-              <Phone size={13} /> Call Us
-            </a>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero */}
       <div className="bg-stone-900 text-white py-16 px-4 text-center">
         <div className="max-w-3xl mx-auto">

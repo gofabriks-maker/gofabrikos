@@ -10,7 +10,7 @@ const TIERS = [
     min: '1 m',
     max: '49 m',
     discount: '0%',
-    perks: ['Standard pricing', 'GST invoice', 'Pan-India delivery'],
+    perks: ['Standard pricing', 'GST invoice', 'Pan-India delivery', '🎁 Surprise gift coupon on eligible orders'],
     highlight: false,
     color: 'border-stone-200',
   },
@@ -18,8 +18,8 @@ const TIERS = [
     name: 'Silver',
     min: '50 m',
     max: '199 m',
-    discount: '8% off',
-    perks: ['8% bulk discount', 'Priority dispatch', 'Dedicated WhatsApp support', 'GST invoice'],
+    discount: '5% off',
+    perks: ['5% bulk discount', 'Priority dispatch', 'Dedicated WhatsApp support', 'GST invoice', '🎁 Surprise gift coupon redeemable on next order'],
     highlight: false,
     color: 'border-stone-300',
   },
@@ -27,8 +27,8 @@ const TIERS = [
     name: 'Gold',
     min: '200 m',
     max: '499 m',
-    discount: '15% off',
-    perks: ['15% bulk discount', 'Same-day dispatch', 'Account manager', 'Credit terms (15 days)', 'GST invoice'],
+    discount: '12% off',
+    perks: ['12% bulk discount', 'Same-day dispatch', 'Dedicated Sales Manager', 'GST invoice', '🎁 Surprise gift coupon redeemable on next order'],
     highlight: true,
     color: 'border-rose-500',
   },
@@ -36,24 +36,25 @@ const TIERS = [
     name: 'Platinum',
     min: '500 m',
     max: 'unlimited',
-    discount: '22% off',
-    perks: ['22% bulk discount', 'Custom cutting', 'Exclusive new arrivals access', 'Credit terms (30 days)', 'Free delivery pan-India', 'GST invoice'],
+    discount: '15% off',
+    perks: ['15% bulk discount', 'Custom cutting', 'Exclusive new arrivals access', 'Dedicated Sales Manager', 'GST invoice', '🎁 Premium surprise gift coupon redeemable on next order'],
     highlight: false,
     color: 'border-stone-700',
   },
 ]
 
 const FAQS = [
-  { q: 'What is the minimum order for B2B?', a: 'Minimum 50 metres per fabric for B2B pricing. Mix-and-match across fabrics is allowed.' },
+  { q: 'What is the minimum order for B2B?', a: 'Minimum 50 metres per order for B2B pricing. Mix-and-match across different fabrics is allowed within the same order.' },
   { q: 'Do you provide GST invoices?', a: 'Yes, GST invoice is mandatory on all orders — B2B and retail both. GSTIN can be updated in your account.' },
-  { q: 'What are the payment terms?', a: 'Silver tier is advance payment. Gold gets 15-day credit. Platinum gets 30-day credit after 3 successful orders.' },
-  { q: 'Can we order fabric samples?', a: 'Yes, fabric samples of 10×10 cm are available at ₹10/sample (adjusted against your order value).' },
-  { q: 'Do you ship pan-India?', a: 'Yes. Platinum tier gets free delivery. Others pay actuals via DTDC/Blue Dart. Export enquiries welcome.' },
+  { q: 'What are the payment terms?', a: 'All orders must be paid in full through our website before dispatch. We accept UPI, Net Banking, Credit/Debit Cards, and Wallets via our secure payment gateway. Payments made through personal UPI IDs, Google Pay, PhonePe, or any other external links are not accepted. Orders are dispatched only after payment is confirmed in our bank account.' },
+  { q: 'Do you ship pan-India?', a: 'Yes, we deliver pan-India. Bulk/wholesale orders are shipped via road transport for cost-efficiency. Small and retail orders are dispatched through trusted courier partners (DTDC, Delhivery, Blue Dart). Shipping charges are applicable based on weight and destination.' },
+  { q: 'What is the Surprise Gift Coupon?', a: 'Based on your order value, we include a Surprise Gift Coupon in your delivery. The coupon can be used for a discount on your next purchase through our website. Coupon value varies by tier and order volume.' },
+  { q: 'Do B2B discounts apply on sale or offer items?', a: 'No. B2B bulk discounts apply only on regular-priced items. Products already listed under a special offer or promotional discount are sold at the same price for both wholesale and retail customers. No additional B2B discount is applicable on such items.' },
 ]
 
 const TESTIMONIALS = [
   { name: 'Priya Boutique, Chennai',    text: 'Gold tier for 2 years. Quality is consistent, dispatch is fast. GST invoices make accounting easy.', rating: 5 },
-  { name: 'Shree Textiles, Surat',      text: 'Platinum partner. Dedicated account manager and 30-day credit — exactly what a growing business needs.', rating: 5 },
+  { name: 'Shree Textiles, Surat',      text: 'Platinum partner. Dedicated Sales Manager support is excellent — exactly what a growing business needs.', rating: 5 },
   { name: 'Meena Silk House, Coimbatore', text: 'Started at Silver, now Gold. The bulk discounts significantly improve our margin.', rating: 4 },
 ]
 
@@ -106,13 +107,13 @@ export default function WholesalePage() {
             Scale Your Fabric Business<br />with GoFabrikos
           </h1>
           <p className="text-stone-300 text-lg mb-8 max-w-xl mx-auto">
-            Boutiques, designers, and retailers trust us for consistent quality, GST invoicing, and bulk discounts up to 22%.
+            Boutiques, designers, and retailers trust us for consistent quality, GST invoicing, and bulk discounts up to 15%.
           </p>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-stone-300">
             <span className="flex items-center gap-1.5"><Check size={14} className="text-emerald-400" /> GST Invoice on every order</span>
-            <span className="flex items-center gap-1.5"><Check size={14} className="text-emerald-400" /> Credit terms available</span>
+            <span className="flex items-center gap-1.5"><Check size={14} className="text-emerald-400" /> Secure online payment only</span>
             <span className="flex items-center gap-1.5"><Check size={14} className="text-emerald-400" /> Pan-India delivery</span>
-            <span className="flex items-center gap-1.5"><Check size={14} className="text-emerald-400" /> Dedicated account manager</span>
+            <span className="flex items-center gap-1.5"><Check size={14} className="text-emerald-400" /> Dedicated Sales Manager</span>
           </div>
         </div>
       </div>
@@ -122,7 +123,10 @@ export default function WholesalePage() {
         {/* Pricing tiers */}
         <section>
           <h2 className="text-2xl font-bold text-stone-800 text-center mb-2">Wholesale Pricing Tiers</h2>
-          <p className="text-stone-500 text-center mb-8">Discount applies per fabric type per order</p>
+          <p className="text-stone-500 text-center mb-2">Discount applies per order · 🎁 Surprise gift coupon on every order</p>
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-center max-w-2xl mx-auto mb-8">
+            ⚠️ B2B bulk discounts apply only on regular-priced items. Items already on offer or special discount are sold at the same price for both wholesale and retail customers — no additional B2B discount applies.
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {TIERS.map(tier => (
               <div key={tier.name} className={`bg-white rounded-2xl border-2 p-6 relative ${tier.color} ${tier.highlight ? 'shadow-lg' : ''}`}>

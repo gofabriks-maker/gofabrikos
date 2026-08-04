@@ -36,21 +36,6 @@ const values = [
   },
 ]
 
-const team = [
-  {
-    name: 'GoFabrikos Team',
-    role: 'Fabric Experts & Customer Support',
-    desc: 'Our team of fabric experts handpick every variety and are available on WhatsApp to help you choose the perfect fabric.',
-    img: 'https://images.unsplash.com/photo-1607748851687-ba9a10438621?w=300&q=80',
-  },
-  {
-    name: 'Master Weavers',
-    role: 'Artisan Partners Across India',
-    desc: 'We partner with skilled artisans from Chanderi, Varanasi, Kanchipuram, Surat, Jaipur, and 10+ other weaving hubs.',
-    img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80',
-  },
-]
-
 const fabricOrigins = [
   { city: 'Chanderi', state: 'Madhya Pradesh', fabric: 'Chanderi Silk & Cotton' },
   { city: 'Varanasi', state: 'Uttar Pradesh', fabric: 'Banarasi Silk & Brocade' },
@@ -65,30 +50,6 @@ const fabricOrigins = [
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #C8102E, #D4AF37)' }}>
-                <span className="text-white font-bold text-xs">GF</span>
-              </div>
-              <span className="text-xl font-bold" style={{ color: '#1A1A2E' }}>
-                Go<span style={{ color: '#C8102E' }}>Fabrikos</span>
-              </span>
-            </Link>
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/" className="text-gray-600 hover:text-red-700 text-sm font-medium">Home</Link>
-              <Link href="/fabrics" className="text-gray-600 hover:text-red-700 text-sm font-medium">Fabrics</Link>
-              <Link href="/visualizer" className="text-gray-600 hover:text-red-700 text-sm font-medium">Visualizer</Link>
-              <Link href="/about" className="text-red-700 text-sm font-medium border-b-2 border-red-700 pb-1">About</Link>
-            </nav>
-            <Link href="/cart" className="p-2 rounded-full hover:bg-red-50 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            </Link>
-          </div>
-        </div>
-      </header>
 
       {/* Breadcrumb */}
       <div className="bg-gray-50 border-b">
@@ -162,12 +123,12 @@ export default function AboutPage() {
 
               <div className="mt-6 grid grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                  <div className="text-2xl font-black" style={{ color: '#C8102E' }}>2020</div>
-                  <div className="text-sm text-gray-500 font-medium">Year Founded</div>
+                  <div className="text-2xl font-black" style={{ color: '#C8102E' }}>2024</div>
+                  <div className="text-sm text-gray-500 font-medium">GST Registered</div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                   <div className="text-2xl font-black" style={{ color: '#C8102E' }}>Guntur</div>
-                  <div className="text-sm text-gray-500 font-medium">Headquarters</div>
+                  <div className="text-sm text-gray-500 font-medium">Headquarters, AP</div>
                 </div>
               </div>
             </div>
@@ -284,7 +245,7 @@ export default function AboutPage() {
                 {[
                   { icon: <Phone size={18} className="text-green-400" />, label: 'WhatsApp / Phone', value: '+91 82983 08314', href: 'https://wa.me/918298308314' },
                   { icon: <Mail size={18} className="text-blue-400" />, label: 'Email', value: 'care@gofabrikos.com', href: 'mailto:care@gofabrikos.com' },
-                  { icon: <MapPin size={18} className="text-red-400" />, label: 'Location', value: 'Guntur, Andhra Pradesh, India', href: '#' },
+                  { icon: <MapPin size={18} className="text-red-400" />, label: 'Store Address', value: '3rd Floor, 346, Sri Vasavi Whole Sale Cloth Merchants Society, Mangalagiri Road, Guntur Auto Nagar, Guntur – 522001, Andhra Pradesh', href: '#' },
                   { icon: <Clock size={18} className="text-yellow-400" />, label: 'Business Hours', value: 'Mon–Sat: 8 AM – 9 PM IST', href: '#' },
                 ].map(contact => (
                   <a key={contact.label} href={contact.href} target={contact.href.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer"
@@ -317,12 +278,14 @@ export default function AboutPage() {
               <h2 className="text-2xl font-black text-white mb-6">Company Details</h2>
               <div className="bg-white/10 rounded-2xl p-6 border border-white/10 space-y-4">
                 {[
-                  { label: 'Business Name', value: 'GoFabrikos' },
+                  { label: 'Business Name', value: 'GoFabrikos (Gofabriko)' },
                   { label: 'Proprietor', value: 'Lakshmi Sowjanya Aaki' },
+                  { label: 'GSTIN', value: '37DOEPA8029G1Z1' },
+                  { label: 'GST Status', value: 'Active • Regular Taxpayer • Aadhaar Authenticated' },
+                  { label: 'GST Registration', value: '23 October 2024' },
+                  { label: 'Registered Office', value: '3rd Floor, 346, Sri Vasavi Whole Sale Cloth Merchants Society, Mangalagiri Road, Guntur Auto Nagar, Guntur – 522001, Andhra Pradesh' },
                   { label: 'Website', value: 'gofabrikos.com' },
-                  { label: 'Registered Office', value: '3rd Floor, Shop No. 346, Sri Vasavi WCS, Mangalagiri Road, Guntur – 522001, AP' },
-                  { label: 'GST Status', value: 'GST Registered • GSTIN prefix 37 (Andhra Pradesh)' },
-                  { label: 'Business Type', value: 'B2C & B2B Fabric Ecommerce' },
+                  { label: 'Business Type', value: 'B2C & B2B Fabric Ecommerce • Proprietorship' },
                   { label: 'Payment Modes', value: 'UPI, Cards, NetBanking, EMI, COD' },
                 ].map(detail => (
                   <div key={detail.label} className="flex justify-between items-start gap-4 border-b border-white/10 pb-3 last:border-0 last:pb-0">
@@ -361,14 +324,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 border-t bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
-          <p className="font-semibold text-gray-600 mb-1">GoFabrikos | Prop: Lakshmi Sowjanya Aaki</p>
-          <p>Premium Indian Fabrics • WhatsApp: +91 82983 08314 • Guntur, Andhra Pradesh</p>
-        </div>
-      </footer>
     </div>
   )
 }

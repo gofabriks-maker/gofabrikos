@@ -101,8 +101,8 @@ export default function Footer() {
               <p>💬 <a href="https://wa.me/918298308314" className="hover:text-gold transition-colors">+91 82983 08314</a></p>
               <p>📧 care@gofabrikos.com</p>
               <p>🕐 Mon–Sat: 8 AM – 9 PM</p>
-              <p>📍 Guntur, Andhra Pradesh</p>
-              <p>🏛 GSTIN: On every invoice</p>
+              <p className="leading-snug">📍 3rd Floor, 346, Sri Vasavi WCS,<br />Mangalagiri Road, Guntur – 522001, AP</p>
+              <p>🏛 GSTIN: 37DOEPA8029G1Z1</p>
             </div>
           </div>
         </div>

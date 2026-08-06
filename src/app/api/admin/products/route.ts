@@ -1,170 +1,133 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase-admin'
+import { createClient } from '@supabase/supabase-js'
 
-export const dynamic = 'force-dynamic'
+function adminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return createClient(url, key)
+}
 
-// GET /api/admin/products — list products
+function toSlug(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+}
+
+// GET — list products
 export async function GET(req: NextRequest) {
-  try {
-    const supabase = createAdminClient()
-    const { searchParams } = new URL(req.url)
+  const supabase = adminClient()
+  const { searchParams } = new URL(req.url)
+  const page     = Number(searchParams.get('page') || 1)
+  const limit    = Number(searchParams.get('limit') || 50)
+  const category = searchParams.get('category')
+  const search   = searchParams.get('search')
 
-    const category = searchParams.get('category')
-    const status   = searchParams.get('status')
-    const search   = searchParams.get('search')
-    const page     = parseInt(searchParams.get('page') || '1')
-    const limit    = parseInt(searchParams.get('limit') || '20')
-    const offset   = (page - 1) * limit
+  let query = supabase
+    .from('gf_products')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range((page - 1) * limit, page * limit - 1)
 
-    let query = supabase
-      .from('gf_products')
-      .select(`
-        id, name, sku, slug, category, fabric_type, color, print_type,
-        width_inches, weight_gsm, mrp, selling_price, cost_price,
-        gst_rate, hsn_code, stock_meters, min_order_meters, max_order_meters,
-        is_active, is_featured, approval_status, cloudinary_url,
-        wash_care, occasion, description, created_at, updated_at
-      `, { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+  if (category) query = query.eq('category', category)
+  if (search)   query = query.ilike('name', `%${search}%`)
 
-    if (category && category !== 'all') query = query.eq('category', category)
-    if (status === 'active')   query = query.eq('is_active', true).eq('approval_status', 'approved')
-    if (status === 'draft')    query = query.eq('approval_status', 'draft')
-    if (status === 'inactive') query = query.eq('is_active', false)
-    if (search) query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%,category.ilike.%${search}%`)
-
-    const { data, count, error } = await query
-    if (error) throw error
-
-    return NextResponse.json({ products: data, total: count, page, limit })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
+  const { data, error, count } = await query
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ data, total: count, page, limit })
 }
 
-// POST /api/admin/products — create new product
+// POST — create product
 export async function POST(req: NextRequest) {
-  try {
-    const supabase = createAdminClient()
-    const body = await req.json()
+  const supabase = adminClient()
 
-    // Generate slug from name
-    const slug = body.name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .trim()
+  try {
+    const body = await req.json()
+    const {
+      name, sku, category, description,
+      fabricType, color, printType, weightGsm,
+      mrp, sellingPrice, costPrice,
+      gstRate, hsnCode, stock, minOrderMtr, maxOrderMtr,
+      occasion, washCare, cloudinaryUrl, cloudinaryUrls,
+      isActive, isFeatured, tags,
+    } = body
+
+    if (!name || !sellingPrice) {
+      return NextResponse.json({ error: 'name and sellingPrice are required' }, { status: 400 })
+    }
+
+    const row: Record<string, unknown> = {
+      name:         name.trim(),
+      sku:          sku || name.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 12),
+      slug:         toSlug(name),
+      category:     category || 'Plain Fabrics',
+      description:  description || '',
+      fabric_type:  fabricType || '',
+      color:        color || '',
+      print_type:   printType || '',
+      mrp:          Number(mrp) || Number(sellingPrice),
+      selling_price: Number(sellingPrice),
+      is_active:    isActive !== undefined ? isActive : true,
+      is_featured:  isFeatured || false,
+      tags:         Array.isArray(tags) ? tags : [],
+    }
+
+    // Optional columns — only set if provided
+    if (weightGsm)    row.weight_gsm     = Number(weightGsm)
+    if (costPrice)    row.cost_price     = Number(costPrice)
+    if (gstRate)      row.gst_rate       = String(gstRate)
+    if (hsnCode)      row.hsn_code       = String(hsnCode)
+    if (stock)        row.stock_metres   = Number(stock)
+    if (minOrderMtr)  row.min_order_mtr  = Number(minOrderMtr)
+    if (maxOrderMtr)  row.max_order_mtr  = Number(maxOrderMtr)
+    if (occasion)     row.occasion       = String(occasion)
+    if (washCare)     row.wash_care      = String(washCare)
+    if (cloudinaryUrl)  row.cloudinary_url  = String(cloudinaryUrl)
+    if (cloudinaryUrls) row.cloudinary_urls = cloudinaryUrls
 
     const { data, error } = await supabase
       .from('gf_products')
-      .insert({
-        name:             body.name,
-        sku:              body.sku,
-        slug:             `${slug}-${Date.now()}`,
-        category:         body.category,
-        description:      body.description,
-        fabric_type:      body.fabricType,
-        color:            body.color,
-        print_type:       body.printType,
-        width_inches:     parseFloat(body.width) || 44,
-        weight_gsm:       parseInt(body.weightGsm) || null,
-        mrp:              parseFloat(body.mrp) || 0,
-        selling_price:    parseFloat(body.sellingPrice) || 0,
-        cost_price:       parseFloat(body.costPrice) || 0,
-        gst_rate:         body.gstRate === '12%' ? 12 : 5,
-        hsn_code:         body.hsnCode || '5007',
-        stock_meters:     parseFloat(body.stock) || 0,
-        min_order_meters: parseFloat(body.minOrderMtr) || 1,
-        max_order_meters: body.maxOrderMtr ? parseFloat(body.maxOrderMtr) : null,
-        occasion:         body.occasion,
-        wash_care:        body.washCare,
-        cloudinary_url:   body.cloudinaryUrl,
-        is_active:        body.isActive !== false,
-        is_featured:      body.isFeatured === true,
-        approval_status:  body.isActive !== false ? 'approved' : 'draft',
-        tags:             body.tags || [],
-      })
+      .insert(row)
       .select()
       .single()
 
-    if (error) throw error
-    return NextResponse.json({ product: data }, { status: 201 })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    if (error) {
+      console.error('Insert error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ data }, { status: 201 })
+  } catch (err) {
+    console.error('POST /api/admin/products error:', err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
 
-// PATCH /api/admin/products — update product
+// PATCH — update product
 export async function PATCH(req: NextRequest) {
-  try {
-    const supabase = createAdminClient()
-    const body = await req.json()
-    const { id, ...updates } = body
+  const supabase = adminClient()
+  const body = await req.json()
+  const { id, ...updates } = body
 
-    if (!id) return NextResponse.json({ error: 'Missing product id' }, { status: 400 })
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-    // Map frontend field names to DB column names
-    const dbUpdates: Record<string, any> = {
-      updated_at: new Date().toISOString(),
-    }
-    if (updates.name)          dbUpdates.name           = updates.name
-    if (updates.sku)           dbUpdates.sku            = updates.sku
-    if (updates.category)      dbUpdates.category       = updates.category
-    if (updates.description)   dbUpdates.description    = updates.description
-    if (updates.fabricType)    dbUpdates.fabric_type    = updates.fabricType
-    if (updates.color)         dbUpdates.color          = updates.color
-    if (updates.printType)     dbUpdates.print_type     = updates.printType
-    if (updates.width)         dbUpdates.width_inches   = parseFloat(updates.width)
-    if (updates.weightGsm)     dbUpdates.weight_gsm     = parseInt(updates.weightGsm)
-    if (updates.mrp)           dbUpdates.mrp            = parseFloat(updates.mrp)
-    if (updates.sellingPrice)  dbUpdates.selling_price  = parseFloat(updates.sellingPrice)
-    if (updates.costPrice)     dbUpdates.cost_price     = parseFloat(updates.costPrice)
-    if (updates.gstRate)       dbUpdates.gst_rate       = updates.gstRate === '12%' ? 12 : 5
-    if (updates.hsnCode)       dbUpdates.hsn_code       = updates.hsnCode
-    if (updates.stock)         dbUpdates.stock_meters   = parseFloat(updates.stock)
-    if (updates.minOrderMtr)   dbUpdates.min_order_meters = parseFloat(updates.minOrderMtr)
-    if (updates.occasion)      dbUpdates.occasion       = updates.occasion
-    if (updates.washCare)      dbUpdates.wash_care      = updates.washCare
-    if (updates.cloudinaryUrl) dbUpdates.cloudinary_url = updates.cloudinaryUrl
-    if (updates.tags)          dbUpdates.tags           = updates.tags
-    if (typeof updates.isActive   !== 'undefined') {
-      dbUpdates.is_active = updates.isActive
-      dbUpdates.approval_status = updates.isActive ? 'approved' : 'draft'
-    }
-    if (typeof updates.isFeatured !== 'undefined') dbUpdates.is_featured = updates.isFeatured
+  const { data, error } = await supabase
+    .from('gf_products')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
 
-    const { data, error } = await supabase
-      .from('gf_products')
-      .update(dbUpdates)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) throw error
-    return NextResponse.json({ product: data })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ data })
 }
 
-// DELETE /api/admin/products — soft delete (set is_active = false)
+// DELETE — delete product
 export async function DELETE(req: NextRequest) {
-  try {
-    const supabase = createAdminClient()
-    const { searchParams } = new URL(req.url)
-    const id = searchParams.get('id')
+  const supabase = adminClient()
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
 
-    if (!id) return NextResponse.json({ error: 'Missing product id' }, { status: 400 })
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-    const { error } = await supabase
-      .from('gf_products')
-      .update({ is_active: false, approval_status: 'archived', updated_at: new Date().toISOString() })
-      .eq('id', id)
-
-    if (error) throw error
-    return NextResponse.json({ success: true })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
+  const { error } = await supabase.from('gf_products').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }

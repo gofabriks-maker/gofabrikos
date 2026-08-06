@@ -1,351 +1,299 @@
 'use client'
-import { useState } from 'react'
-import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import {
-  TrendingUp, TrendingDown, ShoppingBag, Package, Users, IndianRupee,
-  Clock, CheckCircle, AlertTriangle, RotateCcw, ArrowUpRight,
-  Truck, Star, Zap, Activity, Eye, Plus, RefreshCw, Layers, FileBarChart
+  IndianRupee, ShoppingBag, Users, Clock, TrendingUp,
+  Package, AlertTriangle, Layers, FileBarChart, Plus,
+  RefreshCw, ArrowUpRight
 } from 'lucide-react'
+import Link from 'next/link'
 
-// ── Mock data (swap with Supabase queries) ─────────────────────────────────
-const REVENUE_7D = [
-  { day: 'Mon', revenue: 12400, orders: 8 },
-  { day: 'Tue', revenue: 8900,  orders: 6 },
-  { day: 'Wed', revenue: 19800, orders: 14 },
-  { day: 'Thu', revenue: 15200, orders: 10 },
-  { day: 'Fri', revenue: 22100, orders: 16 },
-  { day: 'Sat', revenue: 31400, orders: 22 },
-  { day: 'Sun', revenue: 28700, orders: 19 },
+type Stats = {
+  today:    { revenue: number; orders: number }
+  month:    { revenue: number; orders: number; avgOrderValue: number }
+  totals:   { customers: number; products: number; pendingOrders: number; lowStockItems: number }
+  recentOrders: any[]
+  topProducts:  any[]
+  revenueChart: any[]
+  statusBreakdown: Record<string, number>
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  pending:   '#f59e0b',
+  confirmed: '#3b82f6',
+  processing:'#8b5cf6',
+  shipped:   '#06b6d4',
+  delivered: '#22c55e',
+  cancelled: '#ef4444',
+}
+
+const PIE_COLORS = ['#f59e0b','#3b82f6','#8b5cf6','#22c55e','#ef4444']
+
+// Fallback data shown while real data loads or if DB is empty
+const FALLBACK_CHART = [
+  { date:'Mon', revenue:28400, orders:18 },
+  { date:'Tue', revenue:32100, orders:22 },
+  { date:'Wed', revenue:24800, orders:16 },
+  { date:'Thu', revenue:41200, orders:28 },
+  { date:'Fri', revenue:38700, orders:25 },
+  { date:'Sat', revenue:52300, orders:34 },
+  { date:'Sun', revenue:45900, orders:30 },
 ]
 
-const REVENUE_30D = Array.from({ length: 30 }, (_, i) => ({
-  day: `${i + 1}`,
-  revenue: Math.floor(Math.random() * 30000) + 8000,
-  orders:  Math.floor(Math.random() * 20) + 5,
-}))
+function fmt(n: number) {
+  if (n >= 100000) return `₹${(n/100000).toFixed(1)}L`
+  if (n >= 1000)   return `₹${(n/1000).toFixed(1)}K`
+  return `₹${n.toLocaleString('en-IN')}`
+}
 
-const ORDER_STATUS = [
-  { name: 'Delivered',    value: 142, color: '#22c55e' },
-  { name: 'Shipped',      value: 38,  color: '#3b82f6' },
-  { name: 'Processing',   value: 24,  color: '#f59e0b' },
-  { name: 'Pending',      value: 12,  color: '#f97316' },
-  { name: 'Cancelled',    value: 8,   color: '#ef4444' },
-  { name: 'Returned',     value: 5,   color: '#8b5cf6' },
-]
+export default function DashboardPage() {
+  const [stats, setStats]       = useState<Stats|null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState<string|null>(null)
+  const [chartRange, setRange]  = useState<'7d'|'30d'>('7d')
+  const [lastRefresh, setLast]  = useState(new Date())
 
-const TOP_FABRICS = [
-  { name: 'Banarasi Silk Brocade',    category: 'Designer Sarees', sold: 284, revenue: 142000, stock: 42 },
-  { name: 'Pure Cotton Ikat Print',   category: 'Kurti Fabrics',   sold: 198, revenue: 49500,  stock: 87 },
-  { name: 'Georgette Floral Digital', category: 'Lehenga Fabrics', sold: 176, revenue: 79200,  stock: 23 },
-  { name: 'Rayon Solid Plain',        category: 'Plain Fabrics',   sold: 154, revenue: 30800,  stock: 112 },
-  { name: 'Velvet Embroidery Kurti',  category: 'Blouse Fabrics',  sold: 132, revenue: 79200,  stock: 8 },
-]
-
-const RECENT_ORDERS = [
-  { id: 'GF-2026-0024', customer: 'Ananya Reddy',   amount: 3850,  status: 'delivered',  date: '5 Aug' },
-  { id: 'GF-2026-0023', customer: 'Priya Sharma',   amount: 1299,  status: 'shipped',    date: '5 Aug' },
-  { id: 'GF-2026-0022', customer: 'Meena Patel',    amount: 5600,  status: 'processing', date: '4 Aug' },
-  { id: 'GF-2026-0021', customer: 'Lakshmi Devi',   amount: 2400,  status: 'confirmed',  date: '4 Aug' },
-  { id: 'GF-2026-0020', customer: 'Sunita Kumari',  amount: 780,   status: 'pending',    date: '3 Aug' },
-]
-
-const LOW_STOCK = [
-  { name: 'Velvet Embroidery Kurti',  available: 8,  threshold: 10 },
-  { name: 'Banarasi Silk Dupatta',    available: 5,  threshold: 10 },
-  { name: 'Organza Mirror Work',      available: 12, threshold: 15 },
-  { name: 'Chanderi Cotton Blend',    available: 3,  threshold: 10 },
-]
-
-// ── Sub-components ─────────────────────────────────────────────────────────
-
-function KpiCard({
-  label, value, subtext, icon: Icon, trend, color = 'rose', href,
-}: {
-  label: string; value: string; subtext?: string
-  icon: React.ElementType; trend?: number; color?: string; href?: string
-}) {
-  const colors: Record<string, string> = {
-    rose:   'bg-rose-50 text-rose-600',
-    blue:   'bg-blue-50 text-blue-600',
-    green:  'bg-green-50 text-green-600',
-    amber:  'bg-amber-50 text-amber-600',
-    purple: 'bg-purple-50 text-purple-600',
-    orange: 'bg-orange-50 text-orange-600',
+  async function fetchStats() {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/stats', { cache: 'no-store' })
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      setStats(data)
+      setLast(new Date())
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
   }
-  const inner = (
-    <div className="bg-white rounded-xl border border-stone-200 p-5 hover:shadow-md transition-shadow cursor-default">
-      <div className="flex items-start justify-between mb-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors[color]}`}>
-          <Icon size={18} />
-        </div>
-        {trend !== undefined && (
-          <span className={`flex items-center gap-1 text-xs font-semibold
-            ${trend >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-            {trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-            {Math.abs(trend)}%
-          </span>
-        )}
-      </div>
-      <p className="text-2xl font-bold text-stone-900 mb-0.5">{value}</p>
-      <p className="text-xs font-semibold text-stone-500">{label}</p>
-      {subtext && <p className="text-xs text-stone-400 mt-0.5">{subtext}</p>}
-    </div>
-  )
-  return href ? <Link href={href}>{inner}</Link> : inner
-}
 
-const STATUS_STYLES: Record<string, string> = {
-  delivered:  'bg-green-100 text-green-700',
-  shipped:    'bg-blue-100 text-blue-700',
-  processing: 'bg-amber-100 text-amber-700',
-  confirmed:  'bg-cyan-100 text-cyan-700',
-  pending:    'bg-orange-100 text-orange-700',
-  cancelled:  'bg-red-100 text-red-700',
-  returned:   'bg-purple-100 text-purple-700',
-}
+  useEffect(() => { fetchStats() }, [])
 
-// ── Main Dashboard ─────────────────────────────────────────────────────────
-export default function AdminDashboard() {
-  const [range, setRange] = useState<'7d' | '30d'>('7d')
-  const chartData = range === '7d' ? REVENUE_7D : REVENUE_30D
+  const kpis = stats ? [
+    { label:'Today\'s Revenue',  value: fmt(stats.today.revenue),             sub:`${stats.today.orders} orders today`,    icon: IndianRupee, color:'bg-rose-50 text-rose-600' },
+    { label:'Monthly Revenue',   value: fmt(stats.month.revenue),             sub:`${stats.month.orders} orders this month`, icon: TrendingUp,  color:'bg-green-50 text-green-600' },
+    { label:'Total Customers',   value: stats.totals.customers.toLocaleString('en-IN'), sub:'Registered customers',    icon: Users,       color:'bg-blue-50 text-blue-600' },
+    { label:'Pending Orders',    value: stats.totals.pendingOrders.toString(), sub:'Needs action',                      icon: Clock,       color:'bg-amber-50 text-amber-600' },
+    { label:'Avg Order Value',   value: `₹${stats.month.avgOrderValue.toLocaleString('en-IN')}`, sub:'This month',    icon: ShoppingBag, color:'bg-purple-50 text-purple-600' },
+    { label:'Active Products',   value: stats.totals.products.toLocaleString('en-IN'), sub:'Listed on store',          icon: Layers,      color:'bg-teal-50 text-teal-600' },
+    { label:'Low Stock Items',   value: stats.totals.lowStockItems.toString(), sub:'Below threshold',                  icon: AlertTriangle,color:'bg-orange-50 text-orange-600' },
+    { label:'Today\'s Orders',   value: stats.today.orders.toString(),        sub:'Orders placed today',               icon: Package,     color:'bg-stone-50 text-stone-600' },
+  ] : []
 
-  const totalRevenue   = chartData.reduce((s, d) => s + d.revenue, 0)
-  const totalOrders    = chartData.reduce((s, d) => s + d.orders, 0)
+  const chartData = stats?.revenueChart?.length
+    ? stats.revenueChart.map(d => ({ ...d, date: d.date?.slice(5) }))
+    : FALLBACK_CHART
+
+  const pieData = stats ? Object.entries(stats.statusBreakdown).map(([name, value]) => ({ name, value })) : []
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-6">
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-stone-900">Executive Dashboard</h2>
-          <p className="text-sm text-stone-500">Thursday, 6 August 2026 · GoFabrikos, Guntur AP</p>
+          <h2 className="text-xl font-bold text-stone-900">Dashboard</h2>
+          <p className="text-xs text-stone-400 mt-0.5">
+            {loading ? 'Loading live data…' : error ? '⚠️ Using cached data' : `Live · refreshed ${lastRefresh.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/admin/products/new"
-            className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-            <Plus size={15} />Add Product
-          </Link>
-          <button className="flex items-center gap-2 bg-white border border-stone-200 text-stone-600 text-sm px-3 py-2 rounded-xl hover:bg-stone-50">
-            <RefreshCw size={14} />Refresh
+          <button onClick={fetchStats} disabled={loading}
+            className="flex items-center gap-1.5 text-sm border border-stone-200 bg-white text-stone-600 px-3 py-2 rounded-xl hover:bg-stone-50 disabled:opacity-50">
+            <RefreshCw size={13} className={loading?'animate-spin':''}/> Refresh
           </button>
+          <Link href="/admin/products/add"
+            className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold px-4 py-2 rounded-xl">
+            <Plus size={14}/>Add Product
+          </Link>
         </div>
       </div>
 
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-700 flex items-center gap-2">
+          <AlertTriangle size={14}/>
+          Database not yet set up — showing demo data. Run the Phase 1 SQL schema in Supabase to see live data.
+          <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" className="underline font-semibold ml-auto">Open Supabase →</a>
+        </div>
+      )}
+
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
-        <KpiCard label="Today's Revenue" value="₹28,700" subtext="vs ₹22,100 yesterday"
-          icon={IndianRupee} trend={29.7} color="rose" />
-        <KpiCard label="Today's Orders"  value="19"       subtext="vs 16 yesterday"
-          icon={ShoppingBag} trend={18.8} color="blue" href="/admin/orders" />
-        <KpiCard label="Total Customers" value="1,842"    subtext="+12 this week"
-          icon={Users} trend={8.4} color="green" href="/admin/customers" />
-        <KpiCard label="Pending Orders"  value="12"       subtext="Needs attention"
-          icon={Clock} trend={-5} color="amber" href="/admin/orders" />
-        <KpiCard label="Monthly Revenue" value="₹4.28L"   subtext="Aug 2026"
-          icon={TrendingUp} trend={12.3} color="purple" />
-        <KpiCard label="Avg Order Value" value="₹1,510"   subtext="Last 30 days"
-          icon={Activity} trend={3.1} color="orange" />
-        <KpiCard label="Low Stock Items" value="4"         subtext="Below threshold"
-          icon={AlertTriangle} color="amber" href="/admin/inventory" />
-        <KpiCard label="Total Products"  value="13"        subtext="10 active, 3 draft"
-          icon={Package} color="rose" href="/admin/products" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {loading ? (
+          Array.from({length:8}).map((_,i)=>(
+            <div key={i} className="bg-white rounded-xl border border-stone-200 p-4 animate-pulse">
+              <div className="h-7 bg-stone-100 rounded w-24 mb-2"/>
+              <div className="h-3 bg-stone-100 rounded w-32"/>
+            </div>
+          ))
+        ) : (
+          kpis.map(k=>(
+            <div key={k.label} className="bg-white rounded-xl border border-stone-200 p-4 hover:shadow-sm transition-shadow">
+              <div className="flex items-start justify-between mb-2">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${k.color}`}>
+                  <k.icon size={16}/>
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-stone-900">{k.value}</p>
+              <p className="text-xs font-semibold text-stone-500 mt-0.5">{k.label}</p>
+              <p className="text-xs text-stone-400">{k.sub}</p>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* Revenue Chart + Order Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Area Chart */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-stone-200 p-5">
+      {/* Charts Row */}
+      <div className="grid grid-cols-3 gap-5">
+        {/* Revenue Chart */}
+        <div className="col-span-2 bg-white rounded-xl border border-stone-200 p-5">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-bold text-stone-900">Revenue Trend</h3>
-              <p className="text-xs text-stone-500 mt-0.5">
-                ₹{(totalRevenue / 1000).toFixed(1)}K · {totalOrders} orders
-              </p>
-            </div>
-            <div className="flex rounded-xl border border-stone-200 overflow-hidden text-xs">
-              {(['7d', '30d'] as const).map(r => (
-                <button key={r} onClick={() => setRange(r)}
-                  className={`px-3 py-1.5 font-medium transition-colors
-                    ${range === r ? 'bg-rose-600 text-white' : 'text-stone-500 hover:bg-stone-50'}`}>
-                  {r === '7d' ? '7 Days' : '30 Days'}
+            <h3 className="font-bold text-stone-900">Revenue Trend</h3>
+            <div className="flex gap-1 bg-stone-100 p-0.5 rounded-lg">
+              {(['7d','30d'] as const).map(r=>(
+                <button key={r} onClick={()=>setRange(r)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors
+                    ${chartRange===r?'bg-white text-stone-800 shadow-sm':'text-stone-400'}`}>
+                  {r}
                 </button>
               ))}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={chartData} margin={{top:5,right:5,left:-15,bottom:0}}>
               <defs>
                 <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#e11d48" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="#e11d48" stopOpacity={0.15}/>
+                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
-                tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v: number) => [`₹${v.toLocaleString('en-IN')}`, 'Revenue']}
-                contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }} />
-              <Area type="monotone" dataKey="revenue" stroke="#e11d48" strokeWidth={2}
-                fill="url(#revGrad)" dot={false} activeDot={{ r: 4 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
+              <XAxis dataKey="date" tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
+              <YAxis tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false} tickFormatter={v=>`₹${(v/1000).toFixed(0)}K`}/>
+              <Tooltip contentStyle={{borderRadius:10,border:'1px solid #e2e8f0',fontSize:12}}
+                formatter={(v:number)=>[`₹${v.toLocaleString('en-IN')}`,'']}/>
+              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#e11d48" strokeWidth={2.5}
+                fill="url(#revGrad)" dot={{r:3,fill:'#e11d48'}}/>
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Pie Chart */}
+        {/* Order Status Pie */}
         <div className="bg-white rounded-xl border border-stone-200 p-5">
-          <h3 className="font-bold text-stone-900 mb-1">Order Status</h3>
-          <p className="text-xs text-stone-500 mb-4">229 total orders</p>
-          <ResponsiveContainer width="100%" height={160}>
-            <PieChart>
-              <Pie data={ORDER_STATUS} cx="50%" cy="50%" innerRadius={50} outerRadius={70}
-                paddingAngle={2} dataKey="value">
-                {ORDER_STATUS.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
+          <h3 className="font-bold text-stone-900 mb-4">Order Status</h3>
+          {pieData.length > 0 ? (
+            <>
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={65}
+                    dataKey="value" paddingAngle={3}>
+                    {pieData.map((_,i)=><Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]}/>)}
+                  </Pie>
+                  <Tooltip contentStyle={{borderRadius:10,fontSize:12}}/>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-1.5 mt-2">
+                {pieData.map((d,i)=>(
+                  <div key={d.name} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full" style={{background:PIE_COLORS[i % PIE_COLORS.length]}}/>
+                      <span className="text-stone-600 capitalize">{d.name}</span>
+                    </div>
+                    <span className="font-bold text-stone-700">{d.value}</span>
+                  </div>
                 ))}
-              </Pie>
-              <Tooltip formatter={(v: number, name: string) => [v, name]}
-                contentStyle={{ borderRadius: 10, fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-1.5 mt-2">
-            {ORDER_STATUS.map(s => (
-              <div key={s.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: s.color }} />
-                  <span className="text-stone-600">{s.name}</span>
-                </div>
-                <span className="font-semibold text-stone-700">{s.value}</span>
               </div>
+            </>
+          ) : (
+            <div className="h-40 flex items-center justify-center text-stone-400 text-xs text-center">
+              <div><Package size={24} className="mx-auto mb-2 opacity-30"/>No orders yet</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-3 gap-5">
+        {/* Recent Orders */}
+        <div className="col-span-2 bg-white rounded-xl border border-stone-200">
+          <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between">
+            <h3 className="font-bold text-stone-900">Recent Orders</h3>
+            <Link href="/admin/orders" className="text-xs text-rose-600 hover:underline flex items-center gap-1">
+              View all <ArrowUpRight size={11}/>
+            </Link>
+          </div>
+          {loading ? (
+            <div className="p-5 space-y-3">
+              {Array.from({length:4}).map((_,i)=>(
+                <div key={i} className="animate-pulse flex gap-3">
+                  <div className="h-4 bg-stone-100 rounded flex-1"/>
+                  <div className="h-4 bg-stone-100 rounded w-20"/>
+                </div>
+              ))}
+            </div>
+          ) : stats?.recentOrders?.length ? (
+            <table className="w-full">
+              <thead>
+                <tr className="text-xs font-semibold text-stone-400 border-b border-stone-50">
+                  <th className="px-5 py-2.5 text-left">ORDER</th>
+                  <th className="px-5 py-2.5 text-left">CUSTOMER</th>
+                  <th className="px-5 py-2.5 text-right">AMOUNT</th>
+                  <th className="px-5 py-2.5 text-left">STATUS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-50">
+                {stats.recentOrders.map((o:any)=>(
+                  <tr key={o.orderNumber} className="hover:bg-stone-50">
+                    <td className="px-5 py-3 font-mono text-xs font-bold text-rose-600">{o.orderNumber}</td>
+                    <td className="px-5 py-3">
+                      <p className="text-sm font-medium text-stone-800">{o.customerName}</p>
+                      <p className="text-xs text-stone-400">{o.city}</p>
+                    </td>
+                    <td className="px-5 py-3 text-right font-bold text-stone-900">₹{o.amount?.toLocaleString('en-IN')}</td>
+                    <td className="px-5 py-3">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full capitalize"
+                        style={{background:`${STATUS_COLORS[o.status]}20`,color:STATUS_COLORS[o.status]}}>
+                        {o.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="py-10 text-center text-stone-400 text-sm">
+              <ShoppingBag size={24} className="mx-auto mb-2 opacity-30"/>No orders yet
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-xl border border-stone-200 p-5">
+          <h3 className="font-bold text-stone-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label:'Add Product',   href:'/admin/products/add', icon: Plus,        color:'bg-rose-50 text-rose-600' },
+              { label:'View Orders',   href:'/admin/orders',       icon: ShoppingBag,  color:'bg-blue-50 text-blue-600' },
+              { label:'Inventory',     href:'/admin/inventory',    icon: Layers,       color:'bg-amber-50 text-amber-600' },
+              { label:'Customers',     href:'/admin/customers',    icon: Users,        color:'bg-green-50 text-green-600' },
+              { label:'Invoices',      href:'/admin/invoices',     icon: FileBarChart, color:'bg-purple-50 text-purple-600' },
+              { label:'Reports',       href:'/admin/reports',      icon: TrendingUp,   color:'bg-teal-50 text-teal-600' },
+            ].map(a=>(
+              <Link key={a.label} href={a.href}
+                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-stone-100 hover:border-stone-200 hover:shadow-sm transition-all text-center">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${a.color}`}>
+                  <a.icon size={16}/>
+                </div>
+                <span className="text-xs font-semibold text-stone-700">{a.label}</span>
+              </Link>
             ))}
           </div>
         </div>
       </div>
-
-      {/* Top Fabrics + Recent Orders + Low Stock */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Top Fabrics */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-stone-200 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-stone-900">Top Selling Fabrics</h3>
-            <Link href="/admin/reports" className="text-xs text-rose-600 flex items-center gap-1 hover:underline">
-              View Report <ArrowUpRight size={12} />
-            </Link>
-          </div>
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-xs font-semibold text-stone-400 border-b border-stone-100">
-                <th className="pb-2">Product</th>
-                <th className="pb-2 text-right">Sold</th>
-                <th className="pb-2 text-right">Revenue</th>
-                <th className="pb-2 text-right">Stock</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-50">
-              {TOP_FABRICS.map((f, i) => (
-                <tr key={i} className="group hover:bg-stone-50 transition-colors">
-                  <td className="py-2.5 pr-3">
-                    <p className="text-sm font-medium text-stone-800 truncate max-w-[200px]">{f.name}</p>
-                    <p className="text-xs text-stone-400">{f.category}</p>
-                  </td>
-                  <td className="py-2.5 text-right text-sm text-stone-700 font-medium">{f.sold}m</td>
-                  <td className="py-2.5 text-right text-sm text-stone-700 font-medium">
-                    ₹{(f.revenue / 1000).toFixed(0)}K
-                  </td>
-                  <td className="py-2.5 text-right">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full
-                      ${f.stock < 15 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                      {f.stock}m
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Right column */}
-        <div className="space-y-4">
-
-          {/* Recent Orders */}
-          <div className="bg-white rounded-xl border border-stone-200 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-stone-900 text-sm">Recent Orders</h3>
-              <Link href="/admin/orders" className="text-xs text-rose-600 hover:underline flex items-center gap-1">
-                All <ArrowUpRight size={11} />
-              </Link>
-            </div>
-            <div className="space-y-2.5">
-              {RECENT_ORDERS.map(o => (
-                <Link key={o.id} href={`/admin/orders/${o.id}`}
-                  className="flex items-center justify-between hover:bg-stone-50 rounded-lg px-2 py-1.5 -mx-2 transition-colors">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-stone-700 truncate">{o.customer}</p>
-                    <p className="text-xs text-stone-400">{o.id} · {o.date}</p>
-                  </div>
-                  <div className="text-right shrink-0 ml-2">
-                    <p className="text-xs font-bold text-stone-800">₹{o.amount.toLocaleString('en-IN')}</p>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${STATUS_STYLES[o.status] || ''}`}>
-                      {o.status}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Low Stock Alerts */}
-          <div className="bg-white rounded-xl border border-amber-200 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle size={14} className="text-amber-500" />
-              <h3 className="font-bold text-stone-900 text-sm">Low Stock Alert</h3>
-            </div>
-            <div className="space-y-2">
-              {LOW_STOCK.map((s, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <p className="text-xs text-stone-700 truncate max-w-[140px]">{s.name}</p>
-                  <span className="text-xs font-bold text-amber-600">{s.available}m left</span>
-                </div>
-              ))}
-            </div>
-            <Link href="/admin/inventory"
-              className="mt-3 block text-center text-xs text-amber-600 font-semibold hover:underline">
-              Manage Inventory →
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl border border-stone-200 p-5">
-        <h3 className="font-bold text-stone-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-          {[
-            { label: 'Add Product',    href: '/admin/products/new', icon: Package,    color: 'bg-rose-50 text-rose-600' },
-            { label: 'View Orders',    href: '/admin/orders',       icon: ShoppingBag, color: 'bg-blue-50 text-blue-600' },
-            { label: 'Inventory',      href: '/admin/inventory',    icon: Layers,     color: 'bg-green-50 text-green-600' },
-            { label: 'Customers',      href: '/admin/customers',    icon: Users,      color: 'bg-purple-50 text-purple-600' },
-            { label: 'Create Invoice', href: '/admin/invoices',     icon: IndianRupee, color: 'bg-amber-50 text-amber-600' },
-            { label: 'Reports',        href: '/admin/reports',      icon: TrendingUp, color: 'bg-orange-50 text-orange-600' },
-          ].map(a => (
-            <Link key={a.href} href={a.href}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-stone-100 hover:border-stone-300 hover:shadow-sm transition-all">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.color}`}>
-                <a.icon size={18} />
-              </div>
-              <span className="text-xs font-semibold text-stone-700 text-center">{a.label}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
-
     </div>
   )
 }

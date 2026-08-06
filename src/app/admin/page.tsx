@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Package, ShoppingBag, Users, TrendingUp, Eye, RefreshCw,
@@ -131,6 +132,13 @@ function fmtCur(n: number) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AdminPage() {
+  const router = useRouter()
+
+  async function handleLogout() {
+    await fetch("/api/admin/login", { method: "DELETE" })
+    router.push("/admin/login")
+    router.refresh()
+  }
   const [tab, setTab] = useState<'overview'|'orders'|'products'|'swatches'|'wholesale'|'messages'>('overview')
   const [orders, setOrders]       = useState<Order[]>(MOCK_ORDERS)
   const [products, setProducts]   = useState<Product[]>(MOCK_PRODUCTS)
@@ -239,7 +247,10 @@ export default function AdminPage() {
           <span className="font-bold text-lg">GoFabrikos Admin</span>
           <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-semibold">DASHBOARD</span>
         </div>
-        <div className="text-xs text-stone-400">Prop: Lakshmi Sowjanya Aaki · Guntur, AP</div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-stone-400">Prop: Lakshmi Sowjanya Aaki · Guntur, AP</span>
+          <button onClick={handleLogout} className="text-xs bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg font-medium transition-colors">🔒 Logout</button>
+        </div>
       </div>
 
       {/* Tab Bar */}

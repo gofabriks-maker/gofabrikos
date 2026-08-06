@@ -6,39 +6,14 @@ import Link from 'next/link'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import CloudinaryUpload from '@/components/admin/CloudinaryUpload'
 
-const CATEGORIES = ['saree', 'blouse', 'lehenga', 'dress-material', 'fabric-by-meter']
-
-interface ProductForm {
-  name: string
-  slug: string
-  description: string
-  price: number
-  mrp: number
-  category: string
-  fabric_type: string
-  colors_available: string
-  stock_left: number
-  is_active: boolean
-  images: string[]
-  meta_title: string
-  meta_description: string
-}
-
-const DEFAULT_FORM: ProductForm = {
-  name: '',
-  slug: '',
-  description: '',
-  price: 0,
-  mrp: 0,
-  category: 'saree',
-  fabric_type: '',
-  colors_available: '',
-  stock_left: 100,
-  is_active: true,
-  images: [],
-  meta_title: '',
-  meta_description: '',
-}
+const CATEGORIES = [
+  'Designer Sarees', 'Lehenga Fabrics', 'Kurti Fabrics',
+  'Plain Fabrics', 'Blouse Fabrics', 'Dupattas', 'Lining & Inner', 'Embroidery Work',
+]
+const FABRIC_TYPES = ['Silk', 'Cotton', 'Georgette', 'Chiffon', 'Velvet', 'Linen', 'Rayon', 'Polyester', 'Net', 'Organza', 'Chanderi', 'Tussar', 'Other']
+const PRINT_TYPES  = ['Solid', 'Printed', 'Embroidered', 'Woven Jacquard', 'Digital Print', 'Block Print', 'Zari Work', 'Bandhani', 'Batik', 'None']
+const WASH_CARE    = ['Hand wash cold', 'Machine wash gentle', 'Dry clean only', 'Dry clean recommended', 'Do not wash']
+const SEASONS      = ['All Season', 'Summer', 'Winter', 'Festive', 'Monsoon']
 
 function toSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
@@ -46,78 +21,100 @@ function toSlug(name: string) {
 
 export default function NewProductPage() {
   const router = useRouter()
-  const [form, setForm] = useState<ProductForm>(DEFAULT_FORM)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [saving,  setSaving]  = useState(false)
+  const [error,   setError]   = useState('')
+  const [images,  setImages]  = useState<string[]>([])
 
-  function update<K extends keyof ProductForm>(key: K, val: ProductForm[K]) {
-    setForm(prev => ({ ...prev, [key]: val }))
+  const [form, setForm] = useState({
+    name:          '',
+    slug:          '',
+    fullName:      '',
+    category:      'Designer Sarees',
+    fabricType:    '',
+    composition:   '',
+    printType:     'Solid',
+    gsm:           '',
+    season:        'All Season',
+    washCare:      'Dry clean only',
+    metresPerGarment: '5.5',
+    description:   '',
+    tags:          '',
+    price:         '',
+    mrp:           '',
+    stock:         '',
+    isActive:      true,
+    isNewArrival:  false,
+    isTrending:    false,
+  })
+
+  function upd(k: keyof typeof form, v: any) {
+    setForm(p => ({ ...p, [k]: v }))
   }
 
   function handleNameChange(name: string) {
-    setForm(prev => ({
-      ...prev,
-      name,
-      slug: toSlug(name),
-      meta_title: name ? `${name} | GoFabrikos` : '',
-    }))
+    setForm(p => ({ ...p, name, slug: toSlug(name), fullName: name }))
   }
+
+  const discount = form.price && form.mrp && Number(form.mrp) > Number(form.price)
+    ? Math.round(((Number(form.mrp) - Number(form.price)) / Number(form.mrp)) * 100)
+    : null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
-    if (!form.name.trim()) return setError('Product name is required')
-    if (!form.slug.trim()) return setError('Slug is required')
-    if (form.images.length === 0) return setError('At least one image is required')
-    if (form.price <= 0) return setError('Price must be greater than 0')
+    if (!form.name.trim())   return setError('Product name is required')
+    if (!form.price)         return setError('Selling price is required')
+    if (!form.stock)         return setError('Stock is required')
+    if (images.length === 0) return setError('At least one image is required')
 
     setSaving(true)
 
-    // Use admin API route (service role key bypasses RLS)
     const payload = {
       name:         form.name.trim(),
       sku:          form.slug.replace(/-/g, '').toUpperCase().slice(0, 12),
       category:     form.category,
       description:  form.description.trim(),
-      fabricType:   form.fabric_type.trim(),
-      color:        form.colors_available.split(',')[0]?.trim() || '',
-      mrp:          String(form.mrp || form.price),
-      sellingPrice: String(form.price),
-      stock:        String(form.stock_left),
+      fabricType:   form.fabricType,
+      color:        '',
+      printType:    form.printType,
+      weightGsm:    form.gsm,
+      mrp:          form.mrp || form.price,
+      sellingPrice: form.price,
+      stock:        form.stock,
       minOrderMtr:  '1',
-      isActive:     form.is_active,
-      isFeatured:   false,
-      cloudinaryUrl: form.images[0] || '',
+      washCare:     form.washCare,
+      occasion:     form.season,
+      isActive:     form.isActive,
+      isFeatured:   form.isTrending,
+      cloudinaryUrl: images[0] || '',
       hsnCode:      '5007',
       gstRate:      '5%',
-      occasion:     '',
-      washCare:     '',
-      tags:         [],
+      tags:         form.tags.split(',').map((t: string) => t.trim()).filter(Boolean),
     }
 
-    const res = await fetch('/api/admin/products', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
-    })
-    const data = await res.json()
-
-    if (!res.ok) {
-      setError(data.error || 'Save failed')
+    try {
+      const res  = await fetch('/api/admin/products', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error || 'Save failed'); setSaving(false); return }
+      router.push('/admin/products')
+    } catch {
+      setError('Network error — please try again')
       setSaving(false)
-      return
     }
-
-    router.push('/admin/products')
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Link href="/admin" className="p-2 rounded-xl hover:bg-gray-200 transition-colors">
+          <Link href="/admin/products" className="p-2 rounded-xl hover:bg-gray-200 transition-colors">
             <ArrowLeft size={20} />
           </Link>
           <div>
@@ -126,18 +123,13 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Images */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-800 mb-4">
-              Product Images <span className="text-red-500">*</span>
-            </h2>
-            <CloudinaryUpload
-              value={form.images}
-              onChange={urls => update('images', urls)}
-              maxImages={5}
-            />
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+            ✕ {error}
           </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* Basic Info */}
           <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
@@ -145,184 +137,168 @@ export default function NewProductPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Product Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => handleNameChange(e.target.value)}
-                  placeholder="e.g. Kanjivaram Pure Silk Saree"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  required
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name <span className="text-red-500">*</span></label>
+                <input type="text" value={form.name} onChange={e => handleNameChange(e.target.value)}
+                  placeholder="e.g. Kalamkari Digital Print Saree"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">URL Slug</label>
-                <input
-                  type="text"
-                  value={form.slug}
-                  onChange={e => update('slug', e.target.value)}
-                  placeholder="kanjivaram-pure-silk-saree"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
-                />
+                <input type="text" value={form.slug} onChange={e => upd('slug', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-rose-300" />
                 <p className="text-xs text-gray-400 mt-1">Auto-generated from name</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={form.category}
-                  onChange={e => update('category', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
-                >
-                  {CATEGORIES.map(c => (
-                    <option key={c} value={c}>{c.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
-                  ))}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name (for display)</label>
+                <input type="text" value={form.fullName} onChange={e => upd('fullName', e.target.value)}
+                  placeholder="Display name shown to customers"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
+                <select value={form.category} onChange={e => upd('category', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rose-300">
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea
-                rows={4}
-                value={form.description}
-                onChange={e => update('description', e.target.value)}
-                placeholder="Describe the fabric, weave, occasion, care instructions…"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fabric Type</label>
+                <select value={form.fabricType} onChange={e => upd('fabricType', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rose-300">
+                  <option value="">Select fabric type</option>
+                  {FABRIC_TYPES.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Composition</label>
+                <input type="text" value={form.composition} onChange={e => upd('composition', e.target.value)}
+                  placeholder="e.g. 100% Silk, Cotton-Poly blend"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Print / Weave Type</label>
+                <select value={form.printType} onChange={e => upd('printType', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rose-300">
+                  {PRINT_TYPES.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">GSM (weight)</label>
+                <input type="number" value={form.gsm} onChange={e => upd('gsm', e.target.value)}
+                  placeholder="e.g. 120"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Season</label>
+                <select value={form.season} onChange={e => upd('season', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rose-300">
+                  {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Wash Care</label>
+                <select value={form.washCare} onChange={e => upd('washCare', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rose-300">
+                  {WASH_CARE.map(w => <option key={w} value={w}>{w}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Metres per Garment</label>
+                <input type="number" step="0.5" value={form.metresPerGarment} onChange={e => upd('metresPerGarment', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+                <p className="text-xs text-gray-400 mt-1">Shown as buying guide to customers</p>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description <span className="text-red-500">*</span></label>
+                <textarea rows={3} value={form.description} onChange={e => upd('description', e.target.value)}
+                  placeholder="Describe the fabric, weave, occasion, care instructions…"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none" />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tags <span className="text-gray-400 font-normal">(comma-separated)</span></label>
+                <input type="text" value={form.tags} onChange={e => upd('tags', e.target.value)}
+                  placeholder="Silk, Saree, Festive, Kalamkari"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+              </div>
             </div>
           </div>
 
           {/* Pricing & Stock */}
           <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-semibold text-gray-800">Pricing & Stock</h2>
+            <h2 className="text-base font-semibold text-gray-800">Pricing &amp; Stock</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Selling Price (₹) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  value={form.price || ''}
-                  onChange={e => update('price', Number(e.target.value))}
-                  min={1}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Selling Price ₹/metre <span className="text-red-500">*</span></label>
+                <input type="number" value={form.price} onChange={e => upd('price', e.target.value)}
                   placeholder="1299"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">MRP (₹)</label>
-                <input
-                  type="number"
-                  value={form.mrp || ''}
-                  onChange={e => update('mrp', Number(e.target.value))}
-                  min={0}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Original / MRP ₹/metre</label>
+                <input type="number" value={form.mrp} onChange={e => upd('mrp', e.target.value)}
                   placeholder="1599"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stock Left</label>
-                <input
-                  type="number"
-                  value={form.stock_left}
-                  onChange={e => update('stock_left', Number(e.target.value))}
-                  min={0}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Discount</label>
+                <div className="w-full px-4 py-2.5 border border-gray-100 rounded-xl text-sm bg-gray-50 text-gray-500">
+                  {discount ? `${discount}% off` : '—'}
+                </div>
               </div>
-              <div className="flex flex-col justify-end pb-1">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div
-                    onClick={() => update('is_active', !form.is_active)}
-                    className={`w-11 h-6 rounded-full transition-colors ${form.is_active ? 'bg-green-500' : 'bg-gray-300'} relative`}
-                  >
-                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${form.is_active ? 'left-5' : 'left-0.5'}`} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Stock Available (metres) <span className="text-red-500">*</span></label>
+                <input type="number" value={form.stock} onChange={e => upd('stock', e.target.value)}
+                  placeholder="50"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6 pt-2">
+              {[
+                { label: 'Active (visible on site)', key: 'isActive' as const },
+                { label: 'New Arrival',              key: 'isNewArrival' as const },
+                { label: 'Trending',                 key: 'isTrending' as const },
+              ].map(({ label, key }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <div onClick={() => upd(key, !form[key])}
+                    className={`w-11 h-6 rounded-full transition-colors ${form[key] ? 'bg-green-500' : 'bg-gray-300'} relative`}>
+                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${form[key] ? 'left-5' : 'left-0.5'}`} />
                   </div>
-                  <span className="text-sm text-gray-700">{form.is_active ? 'Active' : 'Draft'}</span>
+                  <span className="text-sm text-gray-700">{label}</span>
                 </label>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Fabric Details */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-semibold text-gray-800">Fabric Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fabric Type</label>
-                <input
-                  type="text"
-                  value={form.fabric_type}
-                  onChange={e => update('fabric_type', e.target.value)}
-                  placeholder="e.g. Pure Silk, Cotton Blend, Georgette"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Colors Available <span className="text-gray-400 font-normal">(comma-separated)</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.colors_available}
-                  onChange={e => update('colors_available', e.target.value)}
-                  placeholder="Red, Navy Blue, Bottle Green, Ivory"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-            </div>
+          {/* Product Images */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <h2 className="text-base font-semibold text-gray-800 mb-4">
+              Product Images <span className="text-red-500">*</span>
+              <span className="text-gray-400 font-normal text-xs ml-2">(up to 5 photos, first = main image)</span>
+            </h2>
+            <CloudinaryUpload value={images} onChange={setImages} maxImages={5} />
           </div>
-
-          {/* SEO */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-semibold text-gray-800">SEO <span className="text-gray-400 font-normal text-sm">(optional)</span></h2>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Meta Title</label>
-              <input
-                type="text"
-                value={form.meta_title}
-                onChange={e => update('meta_title', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Meta Description</label>
-              <textarea
-                rows={2}
-                value={form.meta_description}
-                onChange={e => update('meta_description', e.target.value)}
-                maxLength={160}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-              />
-              <p className="text-xs text-gray-400 mt-1">{form.meta_description.length}/160 characters</p>
-            </div>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
 
           {/* Submit */}
           <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={saving}
-              className="btn-primary flex items-center gap-2 px-8"
-            >
-              {saving ? (
-                <><Loader2 size={16} className="animate-spin" /> Saving…</>
-              ) : (
-                <><Save size={16} /> Save Product</>
-              )}
+            <button type="submit" disabled={saving}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 disabled:opacity-60 transition-colors">
+              {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Save size={16} /> Save Product</>}
             </button>
-            <Link href="/admin" className="px-6 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+            <Link href="/admin/products"
+              className="px-6 py-3 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
               Cancel
             </Link>
           </div>

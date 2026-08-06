@@ -80,7 +80,10 @@ export async function POST(req: NextRequest) {
     }
 
     const slug = toSlug(name.trim())
-    const generatedSku = sku || name.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 12)
+    // Append 4-digit timestamp suffix to ensure SKU uniqueness
+    const skuBase = name.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 8)
+    const skuSuffix = Date.now().toString().slice(-4)
+    const generatedSku = sku || (skuBase + skuSuffix)
 
     // Build images JSONB from cloudinaryUrl
     const imagesJson = cloudinaryUrl

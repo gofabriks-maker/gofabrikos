@@ -15,10 +15,10 @@ function toSlug(name: string) {
 export async function GET(req: NextRequest) {
   const supabase = adminClient()
   const { searchParams } = new URL(req.url)
-  const page     = Number(searchParams.get('page') || 1)
-  const limit    = Number(searchParams.get('limit') || 50)
-  const category = searchParams.get('category')
-  const search   = searchParams.get('search')
+  const page   = Number(searchParams.get('page') || 1)
+  const limit  = Number(searchParams.get('limit') || 50)
+  const search = searchParams.get('search')
+  const cat    = searchParams.get('category')
 
   let query = supabase
     .from('gf_products')
@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .range((page - 1) * limit, page * limit - 1)
 
-  if (category) query = query.eq('category', category)
-  if (search)   query = query.ilike('name', `%${search}%`)
+  if (search) query = query.ilike('name', `%${search}%`)
+  if (cat)    query = query.eq('category', cat)
 
   const { data, error, count } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -35,6 +35,29 @@ export async function GET(req: NextRequest) {
 }
 
 // POST — create product
+// Field mapping from form payload → gf_products columns:
+//   name             → name
+//   sku              → sku
+//   category         → category          (TEXT column added via ALTER TABLE)
+//   description      → description
+//   fabricType       → fabric_type
+//   color            → color
+//   printType        → print_type
+//   weightGsm        → gsm
+//   mrp              → original_price
+//   sellingPrice     → price
+//   costPrice        → cost_price
+//   gstRate          → gst_rate
+//   hsnCode          → hsn_code
+//   stock            → stock_metres      (NUMERIC column added via ALTER TABLE)
+//   minOrderMtr      → min_order_mtr     (INT column added via ALTER TABLE)
+//   occasion         → occasion          (TEXT column added via ALTER TABLE)
+//   washCare         → wash_care         (TEXT[] — wrap in array)
+//   cloudinaryUrl    → cloudinary_url    (TEXT column added via ALTER TABLE)
+//                   AND images JSONB     (native gf_products column)
+//   isActive         → is_active
+//   isFeatured       → is_featured
+//   tags             → tags              (TEXT[] column added via ALTER TABLE)
 export async function POST(req: NextRequest) {
   const supabase = adminClient()
 
@@ -44,43 +67,53 @@ export async function POST(req: NextRequest) {
       name, sku, category, description,
       fabricType, color, printType, weightGsm,
       mrp, sellingPrice, costPrice,
-      gstRate, hsnCode, stock, minOrderMtr, maxOrderMtr,
-      occasion, washCare, cloudinaryUrl, cloudinaryUrls,
+      gstRate, hsnCode, stock, minOrderMtr,
+      occasion, washCare, cloudinaryUrl,
       isActive, isFeatured, tags,
     } = body
 
-    if (!name || !sellingPrice) {
-      return NextResponse.json({ error: 'name and sellingPrice are required' }, { status: 400 })
+    if (!name?.trim()) {
+      return NextResponse.json({ error: 'Product name is required' }, { status: 400 })
     }
+    if (!sellingPrice) {
+      return NextResponse.json({ error: 'Selling price is required' }, { status: 400 })
+    }
+
+    const slug = toSlug(name.trim())
+    const generatedSku = sku || name.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 12)
+
+    // Build images JSONB from cloudinaryUrl
+    const imagesJson = cloudinaryUrl
+      ? [{ url: cloudinaryUrl, public_id: '', is_main: true, sort: 0 }]
+      : []
 
     const row: Record<string, unknown> = {
-      name:         name.trim(),
-      sku:          sku || name.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 12),
-      slug:         toSlug(name),
-      category:     category || 'Plain Fabrics',
-      description:  description || '',
-      fabric_type:  fabricType || '',
-      color:        color || '',
-      print_type:   printType || '',
-      mrp:          Number(mrp) || Number(sellingPrice),
-      selling_price: Number(sellingPrice),
-      is_active:    isActive !== undefined ? isActive : true,
-      is_featured:  isFeatured || false,
-      tags:         Array.isArray(tags) ? tags : [],
+      name:            name.trim(),
+      sku:             generatedSku,
+      slug,
+      price:           Number(sellingPrice),
+      is_active:       isActive !== undefined ? isActive : true,
+      is_featured:     isFeatured || false,
     }
 
-    // Optional columns — only set if provided
-    if (weightGsm)    row.weight_gsm     = Number(weightGsm)
-    if (costPrice)    row.cost_price     = Number(costPrice)
-    if (gstRate)      row.gst_rate       = String(gstRate)
-    if (hsnCode)      row.hsn_code       = String(hsnCode)
-    if (stock)        row.stock_metres   = Number(stock)
-    if (minOrderMtr)  row.min_order_mtr  = Number(minOrderMtr)
-    if (maxOrderMtr)  row.max_order_mtr  = Number(maxOrderMtr)
-    if (occasion)     row.occasion       = String(occasion)
-    if (washCare)     row.wash_care      = String(washCare)
-    if (cloudinaryUrl)  row.cloudinary_url  = String(cloudinaryUrl)
-    if (cloudinaryUrls) row.cloudinary_urls = cloudinaryUrls
+    // Optional — set if provided
+    if (category)      row.category           = String(category)
+    if (description)   row.description        = String(description)
+    if (fabricType)    row.fabric_type        = String(fabricType)
+    if (color)         row.color              = String(color)
+    if (printType)     row.print_type         = String(printType)
+    if (weightGsm)     row.gsm               = Number(weightGsm)
+    if (mrp)           row.original_price     = Number(mrp)
+    if (costPrice)     row.cost_price         = Number(costPrice)
+    if (gstRate)       row.gst_rate           = Number(String(gstRate).replace('%', ''))
+    if (hsnCode)       row.hsn_code           = String(hsnCode)
+    if (stock)         row.stock_metres       = Number(stock)
+    if (minOrderMtr)   row.min_order_mtr      = Number(minOrderMtr)
+    if (occasion)      row.occasion           = String(occasion)
+    if (washCare)      row.wash_care          = [String(washCare)]   // TEXT[] column
+    if (cloudinaryUrl) row.cloudinary_url     = String(cloudinaryUrl)
+    if (imagesJson.length) row.images         = imagesJson
+    if (tags?.length)  row.tags              = Array.isArray(tags) ? tags : [tags]
 
     const { data, error } = await supabase
       .from('gf_products')

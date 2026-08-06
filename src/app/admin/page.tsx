@@ -1,607 +1,351 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import {
-  Package, ShoppingBag, Users, TrendingUp, Eye, RefreshCw,
-  CheckCircle, Clock, Truck, XCircle, ChevronDown, Search,
-  BarChart2, MessageSquare, Star, ArrowUpRight, Edit2, Save,
-  X, AlertCircle, Layers, Mail, Phone
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts'
+import {
+  TrendingUp, TrendingDown, ShoppingBag, Package, Users, IndianRupee,
+  Clock, CheckCircle, AlertTriangle, RotateCcw, ArrowUpRight,
+  Truck, Star, Zap, Activity, Eye, Plus, RefreshCw
 } from 'lucide-react'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-type OrderStatus = 'confirmed' | 'processing' | 'packed' | 'shipped' | 'delivered' | 'cancelled'
+// ── Mock data (swap with Supabase queries) ─────────────────────────────────
+const REVENUE_7D = [
+  { day: 'Mon', revenue: 12400, orders: 8 },
+  { day: 'Tue', revenue: 8900,  orders: 6 },
+  { day: 'Wed', revenue: 19800, orders: 14 },
+  { day: 'Thu', revenue: 15200, orders: 10 },
+  { day: 'Fri', revenue: 22100, orders: 16 },
+  { day: 'Sat', revenue: 31400, orders: 22 },
+  { day: 'Sun', revenue: 28700, orders: 19 },
+]
 
-interface Order {
-  id: number
-  order_number: string
-  customer_name: string
-  customer_mobile: string
-  customer_email?: string
-  status: OrderStatus
-  total: number
-  payment_method: string
-  created_at: string
-  shipping_address: { city?: string; state?: string; pin?: string }
+const REVENUE_30D = Array.from({ length: 30 }, (_, i) => ({
+  day: `${i + 1}`,
+  revenue: Math.floor(Math.random() * 30000) + 8000,
+  orders:  Math.floor(Math.random() * 20) + 5,
+}))
+
+const ORDER_STATUS = [
+  { name: 'Delivered',    value: 142, color: '#22c55e' },
+  { name: 'Shipped',      value: 38,  color: '#3b82f6' },
+  { name: 'Processing',   value: 24,  color: '#f59e0b' },
+  { name: 'Pending',      value: 12,  color: '#f97316' },
+  { name: 'Cancelled',    value: 8,   color: '#ef4444' },
+  { name: 'Returned',     value: 5,   color: '#8b5cf6' },
+]
+
+const TOP_FABRICS = [
+  { name: 'Banarasi Silk Brocade',    category: 'Designer Sarees', sold: 284, revenue: 142000, stock: 42 },
+  { name: 'Pure Cotton Ikat Print',   category: 'Kurti Fabrics',   sold: 198, revenue: 49500,  stock: 87 },
+  { name: 'Georgette Floral Digital', category: 'Lehenga Fabrics', sold: 176, revenue: 79200,  stock: 23 },
+  { name: 'Rayon Solid Plain',        category: 'Plain Fabrics',   sold: 154, revenue: 30800,  stock: 112 },
+  { name: 'Velvet Embroidery Kurti',  category: 'Blouse Fabrics',  sold: 132, revenue: 79200,  stock: 8 },
+]
+
+const RECENT_ORDERS = [
+  { id: 'GF-2026-0024', customer: 'Ananya Reddy',   amount: 3850,  status: 'delivered',  date: '5 Aug' },
+  { id: 'GF-2026-0023', customer: 'Priya Sharma',   amount: 1299,  status: 'shipped',    date: '5 Aug' },
+  { id: 'GF-2026-0022', customer: 'Meena Patel',    amount: 5600,  status: 'processing', date: '4 Aug' },
+  { id: 'GF-2026-0021', customer: 'Lakshmi Devi',   amount: 2400,  status: 'confirmed',  date: '4 Aug' },
+  { id: 'GF-2026-0020', customer: 'Sunita Kumari',  amount: 780,   status: 'pending',    date: '3 Aug' },
+]
+
+const LOW_STOCK = [
+  { name: 'Velvet Embroidery Kurti',  available: 8,  threshold: 10 },
+  { name: 'Banarasi Silk Dupatta',    available: 5,  threshold: 10 },
+  { name: 'Organza Mirror Work',      available: 12, threshold: 15 },
+  { name: 'Chanderi Cotton Blend',    available: 3,  threshold: 10 },
+]
+
+// ── Sub-components ─────────────────────────────────────────────────────────
+
+function KpiCard({
+  label, value, subtext, icon: Icon, trend, color = 'rose', href,
+}: {
+  label: string; value: string; subtext?: string
+  icon: React.ElementType; trend?: number; color?: string; href?: string
+}) {
+  const colors: Record<string, string> = {
+    rose:   'bg-rose-50 text-rose-600',
+    blue:   'bg-blue-50 text-blue-600',
+    green:  'bg-green-50 text-green-600',
+    amber:  'bg-amber-50 text-amber-600',
+    purple: 'bg-purple-50 text-purple-600',
+    orange: 'bg-orange-50 text-orange-600',
+  }
+  const inner = (
+    <div className="bg-white rounded-xl border border-stone-200 p-5 hover:shadow-md transition-shadow cursor-default">
+      <div className="flex items-start justify-between mb-3">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors[color]}`}>
+          <Icon size={18} />
+        </div>
+        {trend !== undefined && (
+          <span className={`flex items-center gap-1 text-xs font-semibold
+            ${trend >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+            {trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+            {Math.abs(trend)}%
+          </span>
+        )}
+      </div>
+      <p className="text-2xl font-bold text-stone-900 mb-0.5">{value}</p>
+      <p className="text-xs font-semibold text-stone-500">{label}</p>
+      {subtext && <p className="text-xs text-stone-400 mt-0.5">{subtext}</p>}
+    </div>
+  )
+  return href ? <Link href={href}>{inner}</Link> : inner
 }
 
-interface Product {
-  id: number
-  slug: string
-  name: string
-  price: number
-  stock_left: number
-  is_active: boolean
-  category: string
-  rating: number
-  ratings_count: number
-}
-
-interface SwatchRequest {
-  id: number
-  name: string
-  mobile: string
-  city: string
-  status: string
-  created_at: string
-}
-
-interface ContactMessage {
-  id: number
-  name: string
-  mobile: string
-  email?: string
-  subject: string
-  message: string
-  status: string
-  created_at: string
-}
-
-interface WholesaleEnquiry {
-  id: number
-  business_name: string
-  contact_name: string
-  mobile: string
-  city: string
-  monthly_volume?: string
-  status: string
-  created_at: string
-}
-
-// ── Status colours ────────────────────────────────────────────────────────────
-const STATUS_COLORS: Record<OrderStatus, string> = {
-  confirmed:  'bg-blue-100 text-blue-700',
-  processing: 'bg-yellow-100 text-yellow-700',
-  packed:     'bg-purple-100 text-purple-700',
-  shipped:    'bg-indigo-100 text-indigo-700',
+const STATUS_STYLES: Record<string, string> = {
   delivered:  'bg-green-100 text-green-700',
+  shipped:    'bg-blue-100 text-blue-700',
+  processing: 'bg-amber-100 text-amber-700',
+  confirmed:  'bg-cyan-100 text-cyan-700',
+  pending:    'bg-orange-100 text-orange-700',
   cancelled:  'bg-red-100 text-red-700',
-}
-const STATUS_ICON: Record<OrderStatus, React.ReactNode> = {
-  confirmed:  <CheckCircle size={12} />,
-  processing: <Clock size={12} />,
-  packed:     <Package size={12} />,
-  shipped:    <Truck size={12} />,
-  delivered:  <CheckCircle size={12} />,
-  cancelled:  <XCircle size={12} />,
+  returned:   'bg-purple-100 text-purple-700',
 }
 
-// ── Mock fallback data ────────────────────────────────────────────────────────
-const MOCK_ORDERS: Order[] = [
-  { id:1, order_number:'GF-2026-0001', customer_name:'Lakshmi Sowjanya', customer_mobile:'8298308314', customer_email:'sowjanya@gofabrikos.com', status:'delivered', total:3850, payment_method:'UPI', created_at:'2026-07-20T10:30:00Z', shipping_address:{ city:'Guntur', state:'Andhra Pradesh', pin:'522001' } },
-  { id:2, order_number:'GF-2026-0002', customer_name:'Priya Sharma', customer_mobile:'9876543210', status:'shipped', total:1299, payment_method:'Card', created_at:'2026-07-22T14:15:00Z', shipping_address:{ city:'Hyderabad', state:'Telangana', pin:'500001' } },
-  { id:3, order_number:'GF-2026-0003', customer_name:'Anita Reddy', customer_mobile:'8765432109', status:'processing', total:640, payment_method:'COD', created_at:'2026-07-25T09:00:00Z', shipping_address:{ city:'Vijayawada', state:'Andhra Pradesh', pin:'520001' } },
-  { id:4, order_number:'GF-2026-0004', customer_name:'Meena Patel', customer_mobile:'7654321098', status:'confirmed', total:2400, payment_method:'UPI', created_at:'2026-07-28T06:45:00Z', shipping_address:{ city:'Mumbai', state:'Maharashtra', pin:'400001' } },
-]
+// ── Main Dashboard ─────────────────────────────────────────────────────────
+export default function AdminDashboard() {
+  const [range, setRange] = useState<'7d' | '30d'>('7d')
+  const chartData = range === '7d' ? REVENUE_7D : REVENUE_30D
 
-const MOCK_PRODUCTS: Product[] = [
-  { id:1, slug:'mull-chanderi-digital-print',    name:'Mull Chanderi Digital Print',   price:125,  stock_left:28, is_active:true,  category:'Chanderi',   rating:4.7, ratings_count:2189 },
-  { id:2, slug:'pure-silk-banarasi-brocade',     name:'Pure Silk Banarasi Brocade',    price:850,  stock_left:14, is_active:true,  category:'Banarasi',   rating:4.8, ratings_count:1872 },
-  { id:3, slug:'handloom-khadi-cotton',          name:'Handloom Khadi Cotton',         price:280,  stock_left:52, is_active:true,  category:'Khadi',      rating:4.7, ratings_count:1456 },
-  { id:4, slug:'kanjivaram-pure-silk',           name:'Kanjivaram Pure Silk',          price:1200, stock_left:8,  is_active:true,  category:'Kanjivaram', rating:5.0, ratings_count:892 },
-  { id:5, slug:'georgette-embroidered',          name:'Georgette Embroidered',         price:320,  stock_left:35, is_active:true,  category:'Georgette',  rating:4.6, ratings_count:2034 },
-  { id:6, slug:'linen-slub-plain',               name:'Linen Slub Plain',              price:380,  stock_left:41, is_active:true,  category:'Linen',      rating:4.5, ratings_count:1123 },
-  { id:7, slug:'cotton-ikat-double',             name:'Cotton Ikat Double',            price:450,  stock_left:23, is_active:true,  category:'Ikat',       rating:4.8, ratings_count:1567 },
-  { id:8, slug:'mysore-silk-plain',              name:'Mysore Silk Plain',             price:680,  stock_left:19, is_active:true,  category:'Mysore Silk',rating:4.6, ratings_count:978 },
-  { id:9, slug:'handblock-dabu-print-cotton',    name:'Handblock Dabu Print Cotton',   price:380,  stock_left:45, is_active:true,  category:'Block Print', rating:4.7, ratings_count:1345 },
-  { id:10, slug:'pashmina-wool-blend',           name:'Pashmina Wool Blend',           price:950,  stock_left:12, is_active:true,  category:'Pashmina',   rating:4.9, ratings_count:654 },
-  { id:11, slug:'sambalpuri-ikat-silk',          name:'Sambalpuri Ikat Silk',          price:780,  stock_left:16, is_active:true,  category:'Ikat',       rating:4.8, ratings_count:789 },
-  { id:12, slug:'raw-silk-dupion',               name:'Raw Silk Dupion',               price:520,  stock_left:31, is_active:true,  category:'Raw Silk',   rating:4.7, ratings_count:1102 },
-]
-
-const MOCK_SWATCHES: SwatchRequest[] = [
-  { id:1, name:'Kavya Nair',       mobile:'9988776655', city:'Kochi',        status:'pending',    created_at:'2026-07-26T08:00:00Z' },
-  { id:2, name:'Sunita Verma',     mobile:'8877665544', city:'Delhi',        status:'dispatched', created_at:'2026-07-24T12:00:00Z' },
-  { id:3, name:'Radhika Krishnan', mobile:'7766554433', city:'Chennai',      status:'delivered',  created_at:'2026-07-22T10:00:00Z' },
-]
-
-const MOCK_CONTACTS: ContactMessage[] = []
-
-const MOCK_WHOLESALE: WholesaleEnquiry[] = [
-  { id:1, business_name:'Sree Textiles',   contact_name:'Ravi Kumar',   mobile:'9876501234', city:'Vijayawada', monthly_volume:'₹2–5L', status:'new',       created_at:'2026-07-27T09:00:00Z' },
-  { id:2, business_name:'Rani Boutique',   contact_name:'Rani Devi',    mobile:'8765012345', city:'Guntur',     monthly_volume:'₹50K–1L',status:'contacted', created_at:'2026-07-25T14:00:00Z' },
-]
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function fmt(date: string) {
-  return new Date(date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
-}
-function fmtCur(n: number) {
-  return '₹' + n.toLocaleString('en-IN')
-}
-
-// ── Main Component ────────────────────────────────────────────────────────────
-export default function AdminPage() {
-  const router = useRouter()
-
-  async function handleLogout() {
-    await fetch("/api/admin/login", { method: "DELETE" })
-    router.push("/admin/login")
-    router.refresh()
-  }
-  const [tab, setTab] = useState<'overview'|'orders'|'products'|'swatches'|'wholesale'|'messages'>('overview')
-  const [orders, setOrders]       = useState<Order[]>(MOCK_ORDERS)
-  const [products, setProducts]   = useState<Product[]>(MOCK_PRODUCTS)
-  const [swatches, setSwatches]   = useState<SwatchRequest[]>(MOCK_SWATCHES)
-  const [wholesale, setWholesale] = useState<WholesaleEnquiry[]>(MOCK_WHOLESALE)
-  const [contacts,  setContacts]  = useState<ContactMessage[]>(MOCK_CONTACTS)
-  const [search, setSearch]       = useState('')
-  const [editingProduct, setEditingProduct] = useState<number|null>(null)
-  const [editPrice, setEditPrice]  = useState('')
-  const [editStock, setEditStock]  = useState('')
-  const [savingId, setSavingId]    = useState<number|null>(null)
-  const [updatingOrder, setUpdatingOrder] = useState<number|null>(null)
-
-  // Try to load from Supabase
-  useEffect(() => {
-    async function load() {
-      try {
-        const { createClient } = await import('@/lib/supabase/client')
-        const sb = createClient()
-        const [{ data: ord }, { data: prod }, { data: sw }, { data: ws }, { data: cm }] = await Promise.all([
-          sb.from('orders').select('*').order('created_at', { ascending: false }),
-          sb.from('products').select('id,slug,name,price,stock_left,is_active,category,rating,ratings_count').order('id'),
-          sb.from('swatch_requests').select('*').order('created_at', { ascending: false }),
-          sb.from('wholesale_enquiries').select('*').order('created_at', { ascending: false }),
-          sb.from('contact_messages').select('*').order('created_at', { ascending: false }),
-        ])
-        if (ord  && ord.length  > 0) setOrders(ord as Order[])
-        if (prod && prod.length > 0) setProducts(prod as Product[])
-        if (sw   && sw.length   > 0) setSwatches(sw as SwatchRequest[])
-        if (ws   && ws.length   > 0) setWholesale(ws as WholesaleEnquiry[])
-        if (cm   && cm.length   > 0) setContacts(cm as ContactMessage[])
-      } catch { /* use mock data */ }
-    }
-    load()
-  }, [])
-
-  async function updateOrderStatus(id: number, status: OrderStatus) {
-    setUpdatingOrder(id)
-    try {
-      const { createClient } = await import('@/lib/supabase/client')
-      const sb = createClient()
-      await sb.from('orders').update({ status }).eq('id', id)
-    } catch {}
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o))
-    setUpdatingOrder(null)
-  }
-
-  async function saveProduct(id: number) {
-    setSavingId(id)
-    try {
-      const { createClient } = await import('@/lib/supabase/client')
-      const sb = createClient()
-      await sb.from('products').update({
-        price: Number(editPrice),
-        stock_left: Number(editStock),
-      }).eq('id', id)
-    } catch {}
-    setProducts(prev => prev.map(p => p.id === id
-      ? { ...p, price: Number(editPrice), stock_left: Number(editStock) }
-      : p))
-    setSavingId(null)
-    setEditingProduct(null)
-  }
-
-  async function toggleActive(id: number, current: boolean) {
-    try {
-      const { createClient } = await import('@/lib/supabase/client')
-      const sb = createClient()
-      await sb.from('products').update({ is_active: !current }).eq('id', id)
-    } catch {}
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: !current } : p))
-  }
-
-  // Stats
-  const totalRevenue   = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0)
-  const pendingOrders  = orders.filter(o => !['delivered','cancelled'].includes(o.status)).length
-  const lowStock       = products.filter(p => p.stock_left < 15).length
-  const newEnquiries   = wholesale.filter(w => w.status === 'new').length
-  const newMessages    = contacts.filter(c => c.status === 'new').length
-
-  const TABS = [
-    { key:'overview',   label:'Overview',   icon:<BarChart2 size={15}/> },
-    { key:'orders',     label:'Orders',     icon:<ShoppingBag size={15}/>, badge: orders.length },
-    { key:'products',   label:'Products',   icon:<Package size={15}/>,    badge: lowStock },
-    { key:'swatches',   label:'Swatches',   icon:<Star size={15}/> },
-    { key:'wholesale',  label:'Wholesale',  icon:<Users size={15}/>,      badge: newEnquiries },
-    { key:'messages',   label:'Messages',   icon:<Mail size={15}/>,        badge: newMessages || undefined },
-  ]
-
-  const filteredOrders   = orders.filter(o =>
-    o.order_number.toLowerCase().includes(search.toLowerCase()) ||
-    o.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-    o.customer_mobile.includes(search) ||
-    o.status.toLowerCase().includes(search.toLowerCase()))
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.category.toLowerCase().includes(search.toLowerCase()))
+  const totalRevenue   = chartData.reduce((s, d) => s + d.revenue, 0)
+  const totalOrders    = chartData.reduce((s, d) => s + d.orders, 0)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
+
       {/* Header */}
-      <div className="bg-stone-900 text-white px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-stone-400 hover:text-white text-sm">← Website</Link>
-          <span className="text-stone-600">|</span>
-          <span className="font-bold text-lg">GoFabrikos Admin</span>
-          <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-semibold">DASHBOARD</span>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-stone-900">Executive Dashboard</h2>
+          <p className="text-sm text-stone-500">Thursday, 6 August 2026 · GoFabrikos, Guntur AP</p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-stone-400">Prop: Lakshmi Sowjanya Aaki · Guntur, AP</span>
-          <button onClick={handleLogout} className="text-xs bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg font-medium transition-colors">🔒 Logout</button>
+        <div className="flex gap-2">
+          <Link href="/admin/products/new"
+            className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+            <Plus size={15} />Add Product
+          </Link>
+          <button className="flex items-center gap-2 bg-white border border-stone-200 text-stone-600 text-sm px-3 py-2 rounded-xl hover:bg-stone-50">
+            <RefreshCw size={14} />Refresh
+          </button>
         </div>
       </div>
 
-      {/* Tab Bar */}
-      <div className="bg-white border-b border-gray-200 px-6">
-        <div className="flex gap-1 overflow-x-auto">
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => { setTab(t.key as typeof tab); setSearch('') }}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                tab === t.key ? 'border-stone-800 text-stone-900' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-              {t.icon} {t.label}
-              {t.badge ? <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">{t.badge}</span> : null}
-            </button>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
+        <KpiCard label="Today's Revenue" value="₹28,700" subtext="vs ₹22,100 yesterday"
+          icon={IndianRupee} trend={29.7} color="rose" />
+        <KpiCard label="Today's Orders"  value="19"       subtext="vs 16 yesterday"
+          icon={ShoppingBag} trend={18.8} color="blue" href="/admin/orders" />
+        <KpiCard label="Total Customers" value="1,842"    subtext="+12 this week"
+          icon={Users} trend={8.4} color="green" href="/admin/customers" />
+        <KpiCard label="Pending Orders"  value="12"       subtext="Needs attention"
+          icon={Clock} trend={-5} color="amber" href="/admin/orders" />
+        <KpiCard label="Monthly Revenue" value="₹4.28L"   subtext="Aug 2026"
+          icon={TrendingUp} trend={12.3} color="purple" />
+        <KpiCard label="Avg Order Value" value="₹1,510"   subtext="Last 30 days"
+          icon={Activity} trend={3.1} color="orange" />
+        <KpiCard label="Low Stock Items" value="4"         subtext="Below threshold"
+          icon={AlertTriangle} color="amber" href="/admin/inventory" />
+        <KpiCard label="Total Products"  value="13"        subtext="10 active, 3 draft"
+          icon={Package} color="rose" href="/admin/products" />
+      </div>
+
+      {/* Revenue Chart + Order Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Area Chart */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-stone-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-bold text-stone-900">Revenue Trend</h3>
+              <p className="text-xs text-stone-500 mt-0.5">
+                ₹{(totalRevenue / 1000).toFixed(1)}K · {totalOrders} orders
+              </p>
+            </div>
+            <div className="flex rounded-xl border border-stone-200 overflow-hidden text-xs">
+              {(['7d', '30d'] as const).map(r => (
+                <button key={r} onClick={() => setRange(r)}
+                  className={`px-3 py-1.5 font-medium transition-colors
+                    ${range === r ? 'bg-rose-600 text-white' : 'text-stone-500 hover:bg-stone-50'}`}>
+                  {r === '7d' ? '7 Days' : '30 Days'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#e11d48" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
+                tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v: number) => [`₹${v.toLocaleString('en-IN')}`, 'Revenue']}
+                contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }} />
+              <Area type="monotone" dataKey="revenue" stroke="#e11d48" strokeWidth={2}
+                fill="url(#revGrad)" dot={false} activeDot={{ r: 4 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Pie Chart */}
+        <div className="bg-white rounded-xl border border-stone-200 p-5">
+          <h3 className="font-bold text-stone-900 mb-1">Order Status</h3>
+          <p className="text-xs text-stone-500 mb-4">229 total orders</p>
+          <ResponsiveContainer width="100%" height={160}>
+            <PieChart>
+              <Pie data={ORDER_STATUS} cx="50%" cy="50%" innerRadius={50} outerRadius={70}
+                paddingAngle={2} dataKey="value">
+                {ORDER_STATUS.map((entry, i) => (
+                  <Cell key={i} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v: number, name: string) => [v, name]}
+                contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="space-y-1.5 mt-2">
+            {ORDER_STATUS.map(s => (
+              <div key={s.name} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: s.color }} />
+                  <span className="text-stone-600">{s.name}</span>
+                </div>
+                <span className="font-semibold text-stone-700">{s.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Top Fabrics + Recent Orders + Low Stock */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Top Fabrics */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-stone-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-stone-900">Top Selling Fabrics</h3>
+            <Link href="/admin/reports" className="text-xs text-rose-600 flex items-center gap-1 hover:underline">
+              View Report <ArrowUpRight size={12} />
+            </Link>
+          </div>
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-xs font-semibold text-stone-400 border-b border-stone-100">
+                <th className="pb-2">Product</th>
+                <th className="pb-2 text-right">Sold</th>
+                <th className="pb-2 text-right">Revenue</th>
+                <th className="pb-2 text-right">Stock</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-stone-50">
+              {TOP_FABRICS.map((f, i) => (
+                <tr key={i} className="group hover:bg-stone-50 transition-colors">
+                  <td className="py-2.5 pr-3">
+                    <p className="text-sm font-medium text-stone-800 truncate max-w-[200px]">{f.name}</p>
+                    <p className="text-xs text-stone-400">{f.category}</p>
+                  </td>
+                  <td className="py-2.5 text-right text-sm text-stone-700 font-medium">{f.sold}m</td>
+                  <td className="py-2.5 text-right text-sm text-stone-700 font-medium">
+                    ₹{(f.revenue / 1000).toFixed(0)}K
+                  </td>
+                  <td className="py-2.5 text-right">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full
+                      ${f.stock < 15 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                      {f.stock}m
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Right column */}
+        <div className="space-y-4">
+
+          {/* Recent Orders */}
+          <div className="bg-white rounded-xl border border-stone-200 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-stone-900 text-sm">Recent Orders</h3>
+              <Link href="/admin/orders" className="text-xs text-rose-600 hover:underline flex items-center gap-1">
+                All <ArrowUpRight size={11} />
+              </Link>
+            </div>
+            <div className="space-y-2.5">
+              {RECENT_ORDERS.map(o => (
+                <Link key={o.id} href={`/admin/orders/${o.id}`}
+                  className="flex items-center justify-between hover:bg-stone-50 rounded-lg px-2 py-1.5 -mx-2 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-stone-700 truncate">{o.customer}</p>
+                    <p className="text-xs text-stone-400">{o.id} · {o.date}</p>
+                  </div>
+                  <div className="text-right shrink-0 ml-2">
+                    <p className="text-xs font-bold text-stone-800">₹{o.amount.toLocaleString('en-IN')}</p>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${STATUS_STYLES[o.status] || ''}`}>
+                      {o.status}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Low Stock Alerts */}
+          <div className="bg-white rounded-xl border border-amber-200 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle size={14} className="text-amber-500" />
+              <h3 className="font-bold text-stone-900 text-sm">Low Stock Alert</h3>
+            </div>
+            <div className="space-y-2">
+              {LOW_STOCK.map((s, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <p className="text-xs text-stone-700 truncate max-w-[140px]">{s.name}</p>
+                  <span className="text-xs font-bold text-amber-600">{s.available}m left</span>
+                </div>
+              ))}
+            </div>
+            <Link href="/admin/inventory"
+              className="mt-3 block text-center text-xs text-amber-600 font-semibold hover:underline">
+              Manage Inventory →
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-xl border border-stone-200 p-5">
+        <h3 className="font-bold text-stone-900 mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+          {[
+            { label: 'Add Product',    href: '/admin/products/new', icon: Package,    color: 'bg-rose-50 text-rose-600' },
+            { label: 'View Orders',    href: '/admin/orders',       icon: ShoppingBag, color: 'bg-blue-50 text-blue-600' },
+            { label: 'Inventory',      href: '/admin/inventory',    icon: Layers,     color: 'bg-green-50 text-green-600' },
+            { label: 'Customers',      href: '/admin/customers',    icon: Users,      color: 'bg-purple-50 text-purple-600' },
+            { label: 'Create Invoice', href: '/admin/invoices',     icon: IndianRupee, color: 'bg-amber-50 text-amber-600' },
+            { label: 'Reports',        href: '/admin/reports',      icon: TrendingUp, color: 'bg-orange-50 text-orange-600' },
+          ].map(a => (
+            <Link key={a.href} href={a.href}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-stone-100 hover:border-stone-300 hover:shadow-sm transition-all">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.color}`}>
+                <a.icon size={18} />
+              </div>
+              <span className="text-xs font-semibold text-stone-700 text-center">{a.label}</span>
+            </Link>
           ))}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-
-        {/* ── OVERVIEW ── */}
-        {tab === 'overview' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label:'Total Revenue',    value: fmtCur(totalRevenue),  icon:<TrendingUp size={20}/>,   color:'text-green-600',  bg:'bg-green-50' },
-                { label:'Pending Orders',   value: pendingOrders,          icon:<Clock size={20}/>,        color:'text-amber-600',  bg:'bg-amber-50' },
-                { label:'Total Products',   value: products.length,        icon:<Package size={20}/>,      color:'text-blue-600',   bg:'bg-blue-50' },
-                { label:'Low Stock Items',  value: lowStock,               icon:<AlertCircle size={20}/>,  color:'text-red-600',    bg:'bg-red-50' },
-              ].map(stat => (
-                <div key={stat.label} className="bg-white rounded-xl border border-gray-200 p-5">
-                  <div className={`w-10 h-10 rounded-lg ${stat.bg} ${stat.color} flex items-center justify-center mb-3`}>{stat.icon}</div>
-                  <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-                  <div className="text-xs text-gray-500 mt-1">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Recent Orders */}
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h2 className="font-semibold text-gray-900">Recent Orders</h2>
-                <button onClick={() => setTab('orders')} className="text-xs text-blue-600 hover:underline flex items-center gap-1">View all <ArrowUpRight size={12}/></button>
-              </div>
-              <div className="divide-y divide-gray-50">
-                {orders.slice(0,4).map(o => (
-                  <div key={o.id} className="flex items-center justify-between px-6 py-3">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{o.order_number}</div>
-                      <div className="text-xs text-gray-500">{o.customer_name} · {fmt(o.created_at)}</div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-sm">{fmtCur(o.total)}</span>
-                      <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[o.status]}`}>
-                        {STATUS_ICON[o.status]} {o.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Low Stock Alert */}
-            {lowStock > 0 && (
-              <div className="bg-white rounded-xl border border-red-200">
-                <div className="flex items-center gap-2 px-6 py-4 border-b border-red-100">
-                  <AlertCircle size={16} className="text-red-500"/>
-                  <h2 className="font-semibold text-red-700">Low Stock Alert</h2>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {products.filter(p => p.stock_left < 15).map(p => (
-                    <div key={p.id} className="flex items-center justify-between px-6 py-3">
-                      <div className="text-sm font-medium text-gray-900">{p.name}</div>
-                      <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full">{p.stock_left}m left</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── ORDERS ── */}
-        {tab === 'orders' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1 max-w-sm">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
-                <input value={search} onChange={e => setSearch(e.target.value)}
-                  placeholder="Search by order no, name, mobile..."
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-300"/>
-              </div>
-              <span className="text-sm text-gray-500">{filteredOrders.length} orders</span>
-            </div>
-
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    {['Order #','Customer','Date','Amount','Payment','Status','Action'].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {filteredOrders.map(o => (
-                    <tr key={o.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-mono text-xs font-semibold text-blue-600">{o.order_number}</td>
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900">{o.customer_name}</div>
-                        <div className="text-xs text-gray-500 flex items-center gap-1"><Phone size={10}/>{o.customer_mobile}</div>
-                        {o.shipping_address?.city && <div className="text-xs text-gray-400">{o.shipping_address.city}, {o.shipping_address.state}</div>}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{fmt(o.created_at)}</td>
-                      <td className="px-4 py-3 font-bold text-gray-900">{fmtCur(o.total)}</td>
-                      <td className="px-4 py-3 text-gray-600 text-xs">{o.payment_method}</td>
-                      <td className="px-4 py-3">
-                        <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium w-fit ${STATUS_COLORS[o.status]}`}>
-                          {STATUS_ICON[o.status]} {o.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <select
-                          value={o.status}
-                          disabled={updatingOrder === o.id}
-                          onChange={e => updateOrderStatus(o.id, e.target.value as OrderStatus)}
-                          className="text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-stone-400 disabled:opacity-50">
-                          {(['confirmed','processing','packed','shipped','delivered','cancelled'] as OrderStatus[]).map(s => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table></div>
-              {filteredOrders.length === 0 && (
-                <div className="text-center py-12 text-gray-400">No orders found</div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── PRODUCTS ── */}
-        {tab === 'products' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/admin/products/new"
-                className="flex items-center gap-1.5 bg-primary text-white text-sm px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium flex-shrink-0"
-              >
-                <Package size={14} /> Add Product
-              </Link>
-              <div className="relative flex-1 max-w-sm">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
-                <input value={search} onChange={e => setSearch(e.target.value)}
-                  placeholder="Search products..."
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-300"/>
-              </div>
-              <span className="text-sm text-gray-500">{filteredProducts.length} products</span>
-            </div>
-
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    {['Product','Category','Price (₹/m)','Stock','Rating','Active','Actions'].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {filteredProducts.map(p => (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <Link href={`/fabrics/${p.slug}`} className="font-medium text-gray-900 hover:text-blue-600">{p.name}</Link>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{p.category}</td>
-                      <td className="px-4 py-3">
-                        {editingProduct === p.id ? (
-                          <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)}
-                            className="w-20 border border-blue-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"/>
-                        ) : (
-                          <span className="font-semibold">₹{p.price}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {editingProduct === p.id ? (
-                          <input type="number" value={editStock} onChange={e => setEditStock(e.target.value)}
-                            className="w-16 border border-blue-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"/>
-                        ) : (
-                          <span className={`font-semibold ${p.stock_left < 15 ? 'text-red-600' : 'text-green-600'}`}>
-                            {p.stock_left}m
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="flex items-center gap-1 text-xs text-amber-600">
-                          <Star size={11} className="fill-amber-400 text-amber-400"/> {p.rating} ({p.ratings_count})
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => toggleActive(p.id, p.is_active)}
-                          className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${p.is_active ? 'bg-green-500' : 'bg-gray-300'}`}>
-                          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${p.is_active ? 'translate-x-4' : 'translate-x-0.5'}`}/>
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        {editingProduct === p.id ? (
-                          <div className="flex gap-2">
-                            <button onClick={() => saveProduct(p.id)} disabled={savingId === p.id}
-                              className="text-xs bg-green-600 text-white px-2 py-1 rounded flex items-center gap-1 hover:bg-green-700 disabled:opacity-50">
-                              <Save size={11}/> Save
-                            </button>
-                            <button onClick={() => setEditingProduct(null)}
-                              className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">
-                              <X size={11}/>
-                            </button>
-                          </div>
-                        ) : (
-                          <button onClick={() => { setEditingProduct(p.id); setEditPrice(String(p.price)); setEditStock(String(p.stock_left)) }}
-                            className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                            <Edit2 size={11}/> Edit
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table></div>
-            </div>
-          </div>
-        )}
-
-        {/* ── SWATCHES ── */}
-        {tab === 'swatches' && (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Fabric Enquiries</h2>
-              <p className="text-xs text-gray-500 mt-1">{swatches.length} total requests</p>
-            </div>
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  {['#','Name','Mobile','City','Status','Date'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {swatches.map(s => (
-                  <tr key={s.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-400 text-xs">{s.id}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{s.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{s.mobile}</td>
-                    <td className="px-4 py-3 text-gray-600">{s.city}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        s.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                        s.status === 'dispatched' ? 'bg-blue-100 text-blue-700' :
-                        'bg-yellow-100 text-yellow-700'}`}>{s.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{fmt(s.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
-            {swatches.length === 0 && <div className="text-center py-12 text-gray-400">No swatch requests yet</div>}
-          </div>
-        )}
-
-        {/* ── WHOLESALE ── */}
-        {tab === 'wholesale' && (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">B2B Wholesale Enquiries</h2>
-              <p className="text-xs text-gray-500 mt-1">{wholesale.length} total enquiries · {newEnquiries} new</p>
-            </div>
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  {['Business','Contact','Mobile','City','Volume','Status','Date'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {wholesale.map(w => (
-                  <tr key={w.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{w.business_name}</td>
-                    <td className="px-4 py-3 text-gray-600">{w.contact_name}</td>
-                    <td className="px-4 py-3 text-gray-600">{w.mobile}</td>
-                    <td className="px-4 py-3 text-gray-600">{w.city}</td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{w.monthly_volume || '—'}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        w.status === 'converted' ? 'bg-green-100 text-green-700' :
-                        w.status === 'contacted' ? 'bg-blue-100 text-blue-700' :
-                        w.status === 'closed'    ? 'bg-gray-100 text-gray-600' :
-                        'bg-amber-100 text-amber-700'}`}>{w.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{fmt(w.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
-            {wholesale.length === 0 && <div className="text-center py-12 text-gray-400">No wholesale enquiries yet</div>}
-          </div>
-        )}
-
-        {tab === 'messages' && (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Contact Messages</h2>
-              <p className="text-xs text-gray-500 mt-1">{contacts.length} total messages{newMessages > 0 ? ` · ${newMessages} new` : ''}</p>
-            </div>
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[700px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  {['Name','Mobile','Subject','Message','Status','Date'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {contacts.map(c => (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{c.name}</td>
-                    <td className="px-4 py-3">
-                      <a href={`https://wa.me/91${c.mobile.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
-                        className="text-emerald-600 hover:underline flex items-center gap-1">
-                        <Phone size={12}/> {c.mobile}
-                      </a>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{c.subject}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px] truncate" title={c.message}>{c.message}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        c.status === 'replied' ? 'bg-green-100 text-green-700' :
-                        c.status === 'read'    ? 'bg-blue-100 text-blue-700' :
-                        c.status === 'closed'  ? 'bg-gray-100 text-gray-600' :
-                        'bg-amber-100 text-amber-700'}`}>{c.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{fmt(c.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
-            {contacts.length === 0 && <div className="text-center py-12 text-gray-400">No contact messages yet</div>}
-          </div>
-        )}
-
-      </div>
     </div>
   )
 }

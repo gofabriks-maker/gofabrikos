@@ -8,7 +8,7 @@ import {
 import {
   TrendingUp, TrendingDown, ShoppingBag, Package, Users, IndianRupee,
   Clock, CheckCircle, AlertTriangle, RotateCcw, ArrowUpRight,
-  Truck, Star, Zap, Activity, Eye, Plus, RefreshCw
+  Truck, Star, Zap, Activity, Eye, Plus, RefreshCw, Layers, FileBarChart
 } from 'lucide-react'
 
 // ── Mock data (swap with Supabase queries) ─────────────────────────────────

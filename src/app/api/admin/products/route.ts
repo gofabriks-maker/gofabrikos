@@ -11,10 +11,23 @@ function toSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
-// GET — list products
+// GET — list products OR fetch single by ?id=xxx
 export async function GET(req: NextRequest) {
   const supabase = adminClient()
   const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+
+  // Single product fetch
+  if (id) {
+    const { data, error } = await supabase
+      .from('gf_products')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ data })
+  }
+
   const page   = Number(searchParams.get('page') || 1)
   const limit  = Number(searchParams.get('limit') || 50)
   const search = searchParams.get('search')

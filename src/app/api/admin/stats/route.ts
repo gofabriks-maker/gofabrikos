@@ -20,7 +20,7 @@ export async function GET() {
     const [
       todayRes, monthRes, pendingOrdersRes, totalProductsRes,
       lowStockRes, recentOrdersRes, topItemsRes,
-      wholesaleRes, contactRes, reviewsRes,
+      wholesaleRes, contactRes, reviewsRes, allPhonesRes,
     ] = await Promise.all([
       // Today orders
       supabase.from('gf_orders').select('total_amount, status').gte('created_at', today),
@@ -34,7 +34,7 @@ export async function GET() {
       // Low stock items
       supabase.from('gf_inventory').select('id', { count: 'exact', head: true })
         .lt('stock_metres', 50),
-      // Recent 5 orders
+      // Recent 6 orders
       supabase.from('gf_orders')
         .select('order_number, customer_name, customer_phone, shipping_city, total_amount, status, payment_status, created_at')
         .order('created_at', { ascending: false }).limit(6),
@@ -50,10 +50,14 @@ export async function GET() {
       // Pending reviews badge
       supabase.from('gf_reviews').select('id', { count: 'exact', head: true })
         .eq('is_approved', false),
+      // Unique customers (by phone number)
+      supabase.from('gf_orders').select('customer_phone'),
     ])
 
     const todayOrders  = todayRes.data  || []
     const monthOrders  = monthRes.data  || []
+    // Unique customers by phone
+    const uniqueCustomers = new Set((allPhonesRes.data || []).map((r: any) => r.customer_phone).filter(Boolean)).size
 
     const todayRevenue  = todayOrders.reduce((s: number, o: any) => s + (o.total_amount || 0), 0)
     const todayCount    = todayOrders.length
@@ -96,7 +100,8 @@ export async function GET() {
         cancellRate,
       },
       totals: {
-        products:     totalProductsRes.count || 0,
+        customers:    uniqueCustomers,
+        products:     totalProductsRes.count  || 0,
         pendingOrders: pendingOrdersRes.count || 0,
         lowStockItems: lowStockRes.count      || 0,
       },

@@ -1,240 +1,359 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
-  Building2, Phone, Mail, MapPin, Package, IndianRupee,
-  Clock, CheckCircle, XCircle, MessageSquare, Search, Eye,
-  TrendingUp, Users, ShoppingBag, Star
+  Building2, Phone, Mail, MapPin,
+  Clock, CheckCircle, XCircle, MessageSquare, Search,
+  TrendingUp, Users, RefreshCw, Loader2, X, ChevronRight
 } from 'lucide-react'
 
-type Enquiry = {
-  id: string
-  name: string
-  business: string
-  phone: string
-  email: string
-  city: string
-  state: string
-  gstin: string
-  products: string
-  quantity: string
-  message: string
-  date: string
-  status: 'new' | 'contacted' | 'negotiating' | 'converted' | 'rejected'
-  estimatedValue: number
-  notes: string
+type EnquiryStatus = 'new' | 'contacted' | 'negotiating' | 'converted' | 'rejected'
+
+interface Enquiry {
+  id:             string
+  business_name:  string
+  contact_name:   string
+  mobile:         string
+  email:          string | null
+  gstin:          string | null
+  city:           string | null
+  monthly_volume: string | null
+  message:        string | null
+  status:         EnquiryStatus
+  admin_notes:    string | null
+  created_at:     string
 }
 
-const ENQUIRIES: Enquiry[] = [
-  { id:'1', name:'Fatima Shaikh',    business:'Shaikh Textiles',    phone:'9876543210', email:'fatima@shaikhtextiles.com', city:'Mumbai',    state:'Maharashtra', gstin:'27AXXXX1234A1Z5', products:'Designer Sarees, Lehenga Fabrics', quantity:'50–100m per design', message:'Looking for exclusive designs for bridal season. Need samples first.', date:'2026-08-05', status:'negotiating', estimatedValue:280000, notes:'Sent 5 sample swatches via courier. Follow up on 10th.' },
-  { id:'2', name:'Rajan Menon',      business:'Kerala Silk House',  phone:'9845001122', email:'rajan@keralasilk.in',       city:'Kochi',     state:'Kerala',      gstin:'32BXXXX5678B2Z3', products:'Silk Fabrics, Chanderi', quantity:'200–500m/month', message:'Wholesale supplier for our 3 stores. Looking for competitive pricing.', date:'2026-08-04', status:'contacted', estimatedValue:180000, notes:'Called on Aug 4. Interested in price tiers. Send B2B catalog.' },
-  { id:'3', name:'Sanjay Gupta',     business:'Gupta Fashion Hub',  phone:'9988776655', email:'sanjay@guptafashion.com',   city:'Surat',     state:'Gujarat',     gstin:'24CXXXX9012C3Z1', products:'Plain Fabrics, Prints', quantity:'1000m+ per month', message:'We are a large distributor. Need factory pricing and minimum order details.', date:'2026-08-03', status:'new', estimatedValue:450000, notes:'' },
-  { id:'4', name:'Deepa Iyer',       business:'Deepa Boutique',     phone:'8012345678', email:'deepa@deepaboutique.com',   city:'Chennai',   state:'Tamil Nadu',  gstin:'', products:'Kurti Fabrics', quantity:'20–50m per design', message:'Small boutique, looking for unique prints not available elsewhere.', date:'2026-08-02', status:'converted', estimatedValue:45000, notes:'Converted to dealer account. First order placed: GF-2021.' },
-  { id:'5', name:'Priya Agarwal',    business:'Priya Collections',  phone:'7890123456', email:'priya@priyacollections.in', city:'Jaipur',    state:'Rajasthan',   gstin:'08DXXXX3456D4Z2', products:'Lehenga Fabrics, Dupattas', quantity:'100m/month', message:'Looking for Rajasthani style fabrics and embroidery materials.', date:'2026-08-01', status:'contacted', estimatedValue:96000, notes:'WhatsApp catalog sent. Awaiting response.' },
-  { id:'6', name:'Suresh Reddy',     business:'Sri Reddy Textiles', phone:'9012345678', email:'suresh@srireddytextiles.in',city:'Hyderabad', state:'Telangana',   gstin:'36EXXXX7890E5Z3', products:'All Categories', quantity:'500m+ monthly', message:'Distributor for Andhra & Telangana. Want exclusivity for some designs.', date:'2026-07-30', status:'rejected', estimatedValue:320000, notes:'Rejected — asked for exclusivity on all designs which is not feasible.' },
-  { id:'7', name:'Meena Pillai',     business:'Meena Fabrics',      phone:'9123456789', email:'meena@meenafabrics.com',    city:'Coimbatore',state:'Tamil Nadu',  gstin:'33FXXXX1234F6Z4', products:'Cotton Fabrics, Plain', quantity:'300m/month', message:'Cotton fabric wholesaler, need GST invoice with all orders.', date:'2026-07-28', status:'new', estimatedValue:72000, notes:'' },
-]
-
-const STATUS_STYLE: Record<string,string> = {
+const STATUS_STYLE: Record<string, string> = {
   new:         'bg-blue-100 text-blue-700',
   contacted:   'bg-amber-100 text-amber-700',
   negotiating: 'bg-purple-100 text-purple-700',
   converted:   'bg-green-100 text-green-700',
   rejected:    'bg-red-100 text-red-600',
 }
-const STATUS_NEXT: Record<string,string> = {
+
+const STATUS_NEXT: Partial<Record<EnquiryStatus, EnquiryStatus>> = {
   new:         'contacted',
   contacted:   'negotiating',
   negotiating: 'converted',
 }
 
-export default function WholesalePage() {
-  const [search, setSearch]       = useState('')
-  const [statusF, setStatusF]     = useState('all')
-  const [selected, setSelected]   = useState<Enquiry|null>(null)
-  const [enquiries, setEnquiries] = useState<Enquiry[]>(ENQUIRIES)
-  const [notes, setNotes]         = useState('')
+const STATUS_FILTERS = ['all', 'new', 'contacted', 'negotiating', 'converted', 'rejected']
 
-  const filtered = enquiries.filter(e => {
-    const q = search.toLowerCase()
-    const match = e.name.toLowerCase().includes(q) || e.business.toLowerCase().includes(q) || e.city.toLowerCase().includes(q)
-    const st = statusF === 'all' || e.status === statusF
-    return match && st
-  })
+// ── Detail Panel ──────────────────────────────────────────────────────────
+function EnquiryPanel({ enq, onClose, onUpdate }: {
+  enq: Enquiry
+  onClose: () => void
+  onUpdate: (id: string, status?: EnquiryStatus, notes?: string) => Promise<void>
+}) {
+  const [notes,    setNotes]    = useState(enq.admin_notes || '')
+  const [saving,   setSaving]   = useState(false)
+  const [updating, setUpdating] = useState(false)
 
-  function advance(id: string) {
-    setEnquiries(prev => prev.map(e =>
-      e.id === id && STATUS_NEXT[e.status]
-        ? { ...e, status: STATUS_NEXT[e.status] as Enquiry['status'] }
-        : e
-    ))
-    setSelected(prev => prev && prev.id === id && STATUS_NEXT[prev.status]
-      ? { ...prev, status: STATUS_NEXT[prev.status] as Enquiry['status'] }
-      : prev
-    )
+  const waMsg = `Hi ${enq.contact_name}! Thank you for your B2B inquiry at GoFabrikos. We'd love to discuss your requirements for *${enq.business_name}*. Can we connect for a quick call? 📞`
+
+  async function saveNotes() {
+    setSaving(true)
+    await onUpdate(enq.id, undefined, notes)
+    setSaving(false)
   }
 
-  const stats = {
-    new:        enquiries.filter(e=>e.status==='new').length,
-    pipeline:   enquiries.filter(e=>['contacted','negotiating'].includes(e.status)).reduce((s,e)=>s+e.estimatedValue,0),
-    converted:  enquiries.filter(e=>e.status==='converted').length,
-    total:      enquiries.length,
+  async function moveStatus(status: EnquiryStatus) {
+    setUpdating(true)
+    await onUpdate(enq.id, status, undefined)
+    setUpdating(false)
   }
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-stone-900">Wholesale & B2B</h2>
-          <p className="text-sm text-stone-500">Manage bulk enquiries and dealer relationships</p>
-        </div>
-      </div>
+    <div className="fixed inset-0 z-40 flex">
+      <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl">
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          <p className="text-2xl font-bold text-blue-600">{stats.new}</p>
-          <p className="text-xs font-semibold text-stone-500 mt-0.5">New Enquiries</p>
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b px-5 py-4 flex items-center gap-3 z-10">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-stone-100">
+            <ChevronRight size={18} />
+          </button>
+          <div className="flex-1">
+            <p className="font-bold text-stone-900">{enq.business_name}</p>
+            <p className="text-xs text-stone-500">{enq.contact_name} · {new Date(enq.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}</p>
+          </div>
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_STYLE[enq.status]}`}>
+            {enq.status}
+          </span>
         </div>
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          <p className="text-2xl font-bold text-purple-600">₹{(stats.pipeline/1000).toFixed(0)}K</p>
-          <p className="text-xs font-semibold text-stone-500 mt-0.5">Pipeline Value</p>
-        </div>
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          <p className="text-2xl font-bold text-green-600">{stats.converted}</p>
-          <p className="text-xs font-semibold text-stone-500 mt-0.5">Converted Dealers</p>
-        </div>
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          <p className="text-2xl font-bold text-stone-700">{stats.total}</p>
-          <p className="text-xs font-semibold text-stone-500 mt-0.5">Total Enquiries</p>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"/>
-          <input value={search} onChange={e=>setSearch(e.target.value)}
-            placeholder="Search name, business, city…"
-            className="w-full pl-8 pr-4 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-none focus:border-rose-400 bg-white"/>
-        </div>
-        <select value={statusF} onChange={e=>setStatusF(e.target.value)}
-          className="px-3 py-2.5 text-sm border border-stone-200 rounded-xl bg-white focus:outline-none">
-          <option value="all">All Status</option>
-          <option value="new">New</option>
-          <option value="contacted">Contacted</option>
-          <option value="negotiating">Negotiating</option>
-          <option value="converted">Converted</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </div>
+        <div className="p-5 space-y-5">
 
-      {/* Enquiries List */}
-      <div className="space-y-3">
-        {filtered.map(e => (
-          <div key={e.id} className="bg-white rounded-xl border border-stone-200 p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600 font-bold shrink-0">
-                  {e.name[0]}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-bold text-stone-900">{e.name}</p>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_STYLE[e.status]}`}>{e.status}</span>
-                  </div>
-                  <p className="text-xs text-stone-500 flex items-center gap-1 mt-0.5">
-                    <Building2 size={10}/>{e.business} · {e.city}, {e.state}
-                  </p>
-                  <div className="flex gap-4 mt-2 flex-wrap">
-                    <span className="text-xs text-stone-500 flex items-center gap-1"><Package size={10}/>{e.products}</span>
-                    <span className="text-xs text-stone-500 flex items-center gap-1"><ShoppingBag size={10}/>{e.quantity}</span>
-                    <span className="text-xs font-semibold text-green-700 flex items-center gap-1"><IndianRupee size={10}/>₹{e.estimatedValue.toLocaleString('en-IN')} est.</span>
-                  </div>
-                  <p className="text-xs text-stone-500 mt-1.5 line-clamp-2">{e.message}</p>
-                  {e.notes && (
-                    <p className="text-xs text-blue-600 mt-1 flex items-start gap-1"><MessageSquare size={10} className="mt-0.5 shrink-0"/>Note: {e.notes}</p>
-                  )}
-                </div>
+          {/* Contact Info */}
+          <div className="bg-stone-50 rounded-xl p-4 space-y-2">
+            <p className="text-xs font-semibold text-stone-400 mb-2">CONTACT</p>
+            <div className="flex items-center gap-2 text-sm text-stone-700">
+              <Phone size={13} className="text-stone-400" /> {enq.mobile}
+            </div>
+            {enq.email && (
+              <div className="flex items-center gap-2 text-sm text-stone-700">
+                <Mail size={13} className="text-stone-400" /> {enq.email}
               </div>
-              <div className="flex flex-col items-end gap-2 shrink-0">
-                <p className="text-xs text-stone-400">{e.date}</p>
-                <div className="flex gap-1.5">
-                  <a href={`tel:${e.phone}`} className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100"><Phone size={13}/></a>
-                  <a href={`mailto:${e.email}`} className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"><Mail size={13}/></a>
-                  <button onClick={()=>setSelected(e)} className="p-1.5 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200"><Eye size={13}/></button>
-                </div>
-                {STATUS_NEXT[e.status] && (
-                  <button onClick={()=>advance(e.id)}
-                    className="text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded-lg">
-                    Move to {STATUS_NEXT[e.status]}
-                  </button>
-                )}
+            )}
+            {enq.city && (
+              <div className="flex items-center gap-2 text-sm text-stone-700">
+                <MapPin size={13} className="text-stone-400" /> {enq.city}
               </div>
+            )}
+            {enq.gstin && (
+              <p className="text-xs text-stone-500 font-mono">GSTIN: {enq.gstin}</p>
+            )}
+          </div>
+
+          {/* Enquiry Details */}
+          <div>
+            <p className="text-xs font-semibold text-stone-400 mb-2">ENQUIRY DETAILS</p>
+            <div className="bg-stone-50 rounded-xl p-4 space-y-2">
+              {enq.monthly_volume && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-400">Monthly Volume</span>
+                  <span className="font-semibold text-stone-800">{enq.monthly_volume}</span>
+                </div>
+              )}
+              {enq.message && (
+                <div className="pt-2 border-t border-stone-100">
+                  <p className="text-xs text-stone-400 mb-1">Message</p>
+                  <p className="text-sm text-stone-700">{enq.message}</p>
+                </div>
+              )}
             </div>
           </div>
-        ))}
-        {filtered.length === 0 && (
-          <div className="bg-white rounded-xl border border-stone-200 py-12 text-center text-stone-400 text-sm">No enquiries found</div>
-        )}
-      </div>
 
-      {/* Detail Panel */}
-      {selected && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex justify-end" onClick={()=>setSelected(null)}>
-          <div className="bg-white w-full max-w-md h-full overflow-y-auto shadow-2xl" onClick={e=>e.stopPropagation()}>
-            <div className="p-6 border-b border-stone-100 flex items-center justify-between">
-              <div>
-                <p className="font-bold text-stone-900">{selected.name}</p>
-                <p className="text-xs text-stone-500">{selected.business}</p>
-              </div>
-              <button onClick={()=>setSelected(null)} className="text-stone-400 hover:text-stone-700 text-lg font-bold">✕</button>
-            </div>
-            <div className="p-6 space-y-5">
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-stone-600"><Phone size={14}/>{selected.phone}</div>
-                <div className="flex items-center gap-2 text-stone-600"><Mail size={14}/>{selected.email}</div>
-                <div className="flex items-center gap-2 text-stone-600"><MapPin size={14}/>{selected.city}, {selected.state}</div>
-                {selected.gstin && <div className="flex items-center gap-2 text-stone-600"><Building2 size={14}/>GSTIN: {selected.gstin}</div>}
-              </div>
-              <div className="bg-stone-50 rounded-xl p-4 space-y-2">
-                <p className="text-xs font-bold text-stone-400">ENQUIRY DETAILS</p>
-                <p className="text-sm text-stone-700"><span className="font-semibold">Products:</span> {selected.products}</p>
-                <p className="text-sm text-stone-700"><span className="font-semibold">Quantity:</span> {selected.quantity}</p>
-                <p className="text-sm text-stone-700"><span className="font-semibold">Est. Value:</span> ₹{selected.estimatedValue.toLocaleString('en-IN')}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-stone-400 mb-2">MESSAGE</p>
-                <p className="text-sm text-stone-700 bg-stone-50 p-3 rounded-xl">{selected.message}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-stone-400 mb-2">NOTES</p>
-                <textarea value={notes || selected.notes} onChange={e=>setNotes(e.target.value)}
-                  rows={3} placeholder="Add internal notes…"
-                  className="w-full px-3 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-none focus:border-rose-400 resize-none"/>
-              </div>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <a href={`tel:${selected.phone}`}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-semibold">
-                    <Phone size={14}/>Call
-                  </a>
-                  <a href={`https://wa.me/91${selected.phone}`} target="_blank" rel="noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold">
-                    <MessageSquare size={14}/>WhatsApp
-                  </a>
-                </div>
-                {STATUS_NEXT[selected.status] && (
-                  <button onClick={()=>advance(selected.id)}
-                    className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold">
-                    Move to {STATUS_NEXT[selected.status]}
-                  </button>
-                )}
-              </div>
-            </div>
+          {/* Admin Notes */}
+          <div>
+            <p className="text-xs font-semibold text-stone-400 mb-2">ADMIN NOTES</p>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Add notes about this enquiry…"
+              rows={4}
+              className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:border-rose-400"
+            />
+            <button onClick={saveNotes} disabled={saving}
+              className="mt-2 w-full py-2 bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
+              {saving ? <Loader2 size={13} className="animate-spin" /> : null}
+              {saving ? 'Saving…' : 'Save Notes'}
+            </button>
           </div>
+
+          {/* Actions */}
+          <div className="space-y-2">
+            {STATUS_NEXT[enq.status] && (
+              <button onClick={() => moveStatus(STATUS_NEXT[enq.status as EnquiryStatus]!)} disabled={updating}
+                className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
+                {updating ? <Loader2 size={14} className="animate-spin" /> : null}
+                Move to: {STATUS_NEXT[enq.status as EnquiryStatus]?.charAt(0).toUpperCase()}{STATUS_NEXT[enq.status as EnquiryStatus]?.slice(1)}
+              </button>
+            )}
+
+            <a href={`https://wa.me/91${enq.mobile}?text=${encodeURIComponent(waMsg)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2.5 border border-green-200 rounded-xl text-sm text-green-700 hover:bg-green-50 font-semibold">
+              <MessageSquare size={14} /> WhatsApp Customer
+            </a>
+
+            {enq.status !== 'rejected' && enq.status !== 'converted' && (
+              <button onClick={() => moveStatus('rejected')} disabled={updating}
+                className="w-full py-2 border border-red-200 text-red-500 text-sm font-medium rounded-xl hover:bg-red-50">
+                Mark Rejected
+              </button>
+            )}
+          </div>
+
         </div>
-      )}
+      </div>
     </div>
+  )
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────
+export default function WholesalePage() {
+  const [enquiries, setEnquiries] = useState<Enquiry[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [search,    setSearch]    = useState('')
+  const [statusF,   setStatusF]   = useState('all')
+  const [selected,  setSelected]  = useState<Enquiry | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (statusF !== 'all') params.set('status', statusF)
+      if (search) params.set('search', search)
+      const res  = await fetch(`/api/admin/wholesale?${params}`)
+      const json = await res.json()
+      setEnquiries(json.enquiries || [])
+    } catch (e) { console.error(e) }
+    finally { setLoading(false) }
+  }, [statusF, search])
+
+  useEffect(() => { load() }, [load])
+
+  async function updateEnquiry(id: string, status?: EnquiryStatus, admin_notes?: string) {
+    const body: Record<string, unknown> = { id }
+    if (status !== undefined)      body.status      = status
+    if (admin_notes !== undefined)  body.admin_notes = admin_notes
+
+    await fetch('/api/admin/wholesale', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    })
+
+    setEnquiries(prev => prev.map(e => e.id === id ? {
+      ...e,
+      ...(status !== undefined      ? { status }      : {}),
+      ...(admin_notes !== undefined ? { admin_notes }  : {}),
+    } : e))
+    setSelected(prev => prev?.id === id ? {
+      ...prev,
+      ...(status !== undefined      ? { status }      : {}),
+      ...(admin_notes !== undefined ? { admin_notes }  : {}),
+    } : prev)
+  }
+
+  const stats = {
+    total:      enquiries.length,
+    new:        enquiries.filter(e => e.status === 'new').length,
+    negotiating:enquiries.filter(e => e.status === 'negotiating').length,
+    converted:  enquiries.filter(e => e.status === 'converted').length,
+  }
+
+  return (
+    <>
+      {selected && (
+        <EnquiryPanel
+          enq={selected}
+          onClose={() => setSelected(null)}
+          onUpdate={updateEnquiry}
+        />
+      )}
+
+      <div className="p-6 max-w-[1400px] mx-auto space-y-5">
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-stone-900">B2B / Wholesale Enquiries</h2>
+            <p className="text-sm text-stone-500">{stats.total} total enquiries</p>
+          </div>
+          <button onClick={load} className="flex items-center gap-2 border border-stone-200 bg-white text-stone-600 text-sm px-3 py-2 rounded-xl hover:bg-stone-50">
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: 'Total',       value: stats.total,       icon: Users,       color: 'text-stone-900' },
+            { label: 'New',         value: stats.new,         icon: Clock,       color: 'text-blue-600'  },
+            { label: 'Negotiating', value: stats.negotiating, icon: TrendingUp,  color: 'text-purple-600'},
+            { label: 'Converted',   value: stats.converted,   icon: CheckCircle, color: 'text-green-600' },
+          ].map(s => {
+            const Icon = s.icon
+            return (
+              <div key={s.label} className="bg-white rounded-xl border border-stone-200 px-4 py-3 text-center">
+                <Icon size={16} className={`mx-auto mb-1 ${s.color}`} />
+                <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+                <p className="text-xs text-stone-400">{s.label}</p>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-xl border border-stone-200 p-4 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search business name, contact, mobile…"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-stone-200 rounded-xl focus:outline-none focus:border-rose-400" />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {STATUS_FILTERS.map(f => (
+              <button key={f} onClick={() => setStatusF(f)}
+                className={`px-3 py-2 rounded-xl text-xs font-semibold capitalize whitespace-nowrap transition-colors
+                  ${statusF === f ? 'bg-rose-600 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                {f === 'all' ? 'All' : f}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center py-20 gap-2 text-stone-400">
+              <Loader2 size={20} className="animate-spin" /> Loading enquiries…
+            </div>
+          ) : enquiries.length === 0 ? (
+            <div className="text-center py-20 text-stone-400">
+              <Building2 size={40} className="mx-auto mb-3 opacity-30" />
+              <p className="font-medium">No enquiries yet</p>
+              <p className="text-sm mt-1">B2B enquiries from the wholesale page will appear here</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-stone-100 bg-stone-50 text-left text-xs font-semibold text-stone-400">
+                    <th className="px-4 py-3">BUSINESS</th>
+                    <th className="px-4 py-3">CONTACT</th>
+                    <th className="px-4 py-3">CITY</th>
+                    <th className="px-4 py-3">VOLUME</th>
+                    <th className="px-4 py-3">STATUS</th>
+                    <th className="px-4 py-3">DATE</th>
+                    <th className="px-4 py-3 text-right">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-50">
+                  {enquiries.map(enq => (
+                    <tr key={enq.id} className="hover:bg-stone-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <button onClick={() => setSelected(enq)}
+                          className="font-bold text-sm text-rose-600 hover:underline text-left">{enq.business_name}</button>
+                        {enq.gstin && <p className="text-xs text-stone-400 font-mono">{enq.gstin}</p>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm font-medium text-stone-800">{enq.contact_name}</p>
+                        <p className="text-xs text-stone-400">{enq.mobile}</p>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-stone-600">{enq.city || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-stone-600">{enq.monthly_volume || '—'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_STYLE[enq.status]}`}>
+                          {enq.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-stone-500">
+                        {new Date(enq.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' })}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <a href={`https://wa.me/91${enq.mobile}`} target="_blank" rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg hover:bg-green-50 text-green-600 transition-colors">
+                            <MessageSquare size={14} />
+                          </a>
+                          <button onClick={() => setSelected(enq)}
+                            className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-500 hover:text-stone-800 transition-colors">
+                            <ChevronRight size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </>
   )
 }

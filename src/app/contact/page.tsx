@@ -1,244 +1,247 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Phone, Mail, MapPin, Clock, MessageCircle, Send, Check, Instagram, Facebook } from 'lucide-react'
+import {
+  Mail, Phone, MapPin, MessageCircle,
+  Send, CheckCircle, Loader2, Clock, Building2
+} from 'lucide-react'
 
-const CONTACT_ITEMS = [
-  {
-    icon: <MessageCircle size={22} className="text-green-500" />,
-    label: 'WhatsApp',
-    value: '+91 82983 08314',
-    sub: 'Fastest response — usually within minutes',
-    href: 'https://wa.me/918298308314?text=Hi%20GoFabrikos%2C%20I%20need%20help.',
-    bg: 'bg-green-50 border-green-200',
-  },
-  {
-    icon: <Phone size={22} className="text-blue-500" />,
-    label: 'Phone',
-    value: '+91 82983 08314',
-    sub: 'Mon–Sat: 8 AM – 9 PM IST',
-    href: 'tel:+918298308314',
-    bg: 'bg-blue-50 border-blue-200',
-  },
-  {
-    icon: <Mail size={22} className="text-rose-500" />,
-    label: 'Email',
-    value: 'care@gofabrikos.com',
-    sub: 'We reply within 24 hours',
-    href: 'mailto:care@gofabrikos.com',
-    bg: 'bg-rose-50 border-rose-200',
-  },
-  {
-    icon: <MapPin size={22} className="text-amber-500" />,
-    label: 'Store Address',
-    value: 'Shop No. 346, Sri Vasavi WCS',
-    sub: '3rd Floor, Mangalagiri Road, Guntur – 522001, AP',
-    href: 'https://maps.google.com/?q=Guntur+Andhra+Pradesh',
-    bg: 'bg-amber-50 border-amber-200',
-  },
+const SUBJECTS = [
+  'Product Enquiry',
+  'Order Support',
+  'B2B / Wholesale',
+  'Custom Fabric Request',
+  'Delivery Issue',
+  'Payment Issue',
+  'Other',
 ]
 
 export default function ContactPage() {
-  const [form, setForm] = useState({ name: '', mobile: '', email: '', subject: '', message: '' })
-  const [submitted, setSubmit] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', subject: '', message: '',
+  })
+  const [loading,   setLoading]   = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [error,     setError]     = useState('')
+
+  function upd(k: keyof typeof form, v: string) {
+    setForm(p => ({ ...p, [k]: v }))
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!form.name.trim() || !form.message.trim()) return
+
     setLoading(true)
+    setError('')
     try {
       const res = await fetch('/api/contact', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body:    JSON.stringify(form),
       })
       if (res.ok) {
-        setSubmit(true)
+        setSubmitted(true)
       } else {
-        alert('Failed to send message. Please try WhatsApp instead.')
+        const j = await res.json()
+        setError(j.error || 'Failed to send message. Please try again.')
       }
     } catch {
-      alert('Network error. Please try WhatsApp instead.')
+      setError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
+  const waMsg = `Hi GoFabrikos! My name is ${form.name || 'Customer'}. I have a query: ${form.message || '(please describe your query)'}`
+
   return (
-    <div className="min-h-screen bg-[#FAF8F5]">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-stone-200">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-rose-800 tracking-wide">
-            Go<span className="text-stone-400 font-light">Fabrikos</span>
-          </Link>
-          <div className="flex items-center gap-4 text-sm text-stone-600">
-            <Link href="/fabrics" className="hover:text-rose-700">Shop</Link>
-            <Link href="/faq" className="hover:text-rose-700">FAQ</Link>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gray-50">
 
       {/* Hero */}
-      <div className="bg-stone-900 text-white py-12 px-4 text-center">
-        <h1 className="text-3xl font-bold mb-2">Contact Us</h1>
-        <p className="text-stone-300 max-w-md mx-auto">
-          Questions about fabrics, orders, or wholesale? We're happy to help.
-        </p>
-        <div className="flex items-center justify-center gap-2 mt-3 text-stone-400 text-sm">
-          <Clock size={14} /> <span>Mon–Sat: 8 AM – 9 PM IST</span>
+      <div className="bg-stone-900 text-white py-14 px-4 text-center">
+        <div className="max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-rose-800 text-white text-xs font-semibold px-4 py-1.5 rounded-full mb-5">
+            <MessageCircle size={13} /> CONTACT US
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3">We're Here to Help</h1>
+          <p className="text-stone-300 text-base max-w-md mx-auto">
+            Questions about fabrics, orders, or wholesale? Reach us on WhatsApp or send a message below.
+          </p>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      <div className="max-w-5xl mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* Left — contact cards + social */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-stone-800 mb-5">Reach Us</h2>
+          {/* Contact Info */}
+          <div className="space-y-5">
 
-            {CONTACT_ITEMS.map(item => (
-              <a
-                key={item.label}
-                href={item.href}
-                target={item.href.startsWith('http') ? '_blank' : '_self'}
-                rel="noopener noreferrer"
-                className={`flex items-start gap-4 p-4 rounded-2xl border ${item.bg} hover:shadow-sm transition-all group`}
-              >
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-                  {item.icon}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-0.5">{item.label}</p>
-                  <p className="font-semibold text-stone-800 group-hover:text-rose-700 transition-colors">{item.value}</p>
-                  <p className="text-xs text-stone-500 mt-0.5">{item.sub}</p>
-                </div>
-              </a>
-            ))}
-
-            {/* Business hours */}
-            <div className="bg-white rounded-2xl border border-stone-200 p-5 mt-6">
-              <h3 className="font-bold text-stone-800 mb-3 flex items-center gap-2">
-                <Clock size={16} className="text-rose-600" /> Business Hours
-              </h3>
-              <div className="space-y-2 text-sm">
-                {[
-                  { day: 'Monday – Saturday', time: '8:00 AM – 9:00 PM', open: true },
-                  { day: 'Sunday',             time: '10:00 AM – 6:00 PM', open: true },
-                  { day: 'Public Holidays',    time: 'Closed', open: false },
-                ].map(row => (
-                  <div key={row.day} className="flex justify-between items-center py-1.5 border-b border-stone-100 last:border-0">
-                    <span className="text-stone-600">{row.day}</span>
-                    <span className={`font-medium ${row.open ? 'text-emerald-600' : 'text-red-500'}`}>{row.time}</span>
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+              <h2 className="font-bold text-gray-900 mb-4">Get in Touch</h2>
+              <div className="space-y-4">
+                <a href="https://wa.me/918790125438" target="_blank" rel="noopener noreferrer"
+                  className="flex items-start gap-3 group">
+                  <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center flex-none group-hover:bg-green-200 transition-colors">
+                    <MessageCircle size={16} className="text-green-600" />
                   </div>
-                ))}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400">WhatsApp (Fastest)</p>
+                    <p className="text-sm font-semibold text-gray-800 group-hover:text-green-600 transition-colors">+91 87901 25438</p>
+                  </div>
+                </a>
+
+                <a href="tel:+918790125438" className="flex items-start gap-3 group">
+                  <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-none group-hover:bg-blue-200 transition-colors">
+                    <Phone size={16} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400">Phone</p>
+                    <p className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">+91 87901 25438</p>
+                  </div>
+                </a>
+
+                <a href="mailto:care@gofabrikos.com" className="flex items-start gap-3 group">
+                  <div className="w-9 h-9 bg-rose-100 rounded-xl flex items-center justify-center flex-none group-hover:bg-rose-200 transition-colors">
+                    <Mail size={16} className="text-rose-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400">Email</p>
+                    <p className="text-sm font-semibold text-gray-800 group-hover:text-rose-600 transition-colors">care@gofabrikos.com</p>
+                  </div>
+                </a>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center flex-none">
+                    <MapPin size={16} className="text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400">Location</p>
+                    <p className="text-sm font-semibold text-gray-800">Hyderabad, Telangana</p>
+                    <p className="text-xs text-gray-400">Pan-India delivery</p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Social */}
-            <div className="bg-white rounded-2xl border border-stone-200 p-5">
-              <h3 className="font-bold text-stone-800 mb-3">Follow Us</h3>
-              <div className="flex gap-3">
-                <a href="#" className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">
-                  <Facebook size={15} /> Facebook
-                </a>
-                <a href="#" className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl text-sm font-medium hover:opacity-90">
-                  <Instagram size={15} /> Instagram
-                </a>
+            {/* Hours */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock size={14} className="text-gray-400" />
+                <h3 className="text-sm font-bold text-gray-700">Business Hours</h3>
               </div>
+              <div className="space-y-1.5 text-sm text-gray-600">
+                <div className="flex justify-between">
+                  <span>Mon – Sat</span>
+                  <span className="font-medium">9:00 AM – 7:00 PM</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sunday</span>
+                  <span className="text-gray-400">WhatsApp only</span>
+                </div>
+              </div>
+            </div>
+
+            {/* B2B CTA */}
+            <div className="bg-stone-900 rounded-2xl p-5 text-white">
+              <Building2 size={20} className="mb-2 text-rose-400" />
+              <h3 className="font-bold mb-1">B2B / Wholesale?</h3>
+              <p className="text-xs text-stone-400 mb-3">Get bulk discounts up to 15% for your boutique or business.</p>
+              <Link href="/b2b"
+                className="inline-block px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-colors">
+                Submit B2B Enquiry →
+              </Link>
             </div>
           </div>
 
-          {/* Right — form */}
-          <div className="bg-white rounded-2xl border border-stone-200 p-6 lg:p-8 h-fit">
-            {submitted ? (
-              <div className="text-center py-10">
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check size={28} className="text-emerald-600" />
-                </div>
-                <h3 className="text-xl font-bold text-stone-800 mb-2">Message Sent!</h3>
-                <p className="text-stone-500 text-sm mb-1">We've received your message and will reply within 24 hours.</p>
-                <p className="text-stone-400 text-xs mb-6">For faster help, WhatsApp us at +91 82983 08314</p>
-                <button
-                  onClick={() => { setSubmit(false); setForm({ name: '', mobile: '', email: '', subject: '', message: '' }) }}
-                  className="px-6 py-2.5 border border-stone-200 text-stone-600 rounded-xl text-sm hover:bg-stone-50"
-                >
-                  Send Another Message
-                </button>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-lg font-bold text-stone-800 mb-1">Send a Message</h2>
-                <p className="text-sm text-stone-500 mb-6">We read every message and reply personally.</p>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-stone-500 mb-1">Full Name *</label>
-                      <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                        placeholder="Your name"
-                        className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-stone-500 mb-1">Mobile *</label>
-                      <input required value={form.mobile} onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))}
-                        placeholder="+91 ..."
-                        className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400" />
-                    </div>
+          {/* Contact Form */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+
+              {submitted ? (
+                <div className="text-center py-10">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle size={30} className="text-green-600" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-500 mb-1">Email</label>
-                    <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                      placeholder="your@email.com"
-                      className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-500 mb-1">Subject *</label>
-                    <select required value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
-                      className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 bg-white">
-                      <option value="">Select topic</option>
-                      <option>Order enquiry</option>
-                      <option>Fabric question</option>
-                      <option>Wholesale / B2B</option>
-                      <option>Return / refund</option>
-                      <option>Fabric Visualizer help</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-500 mb-1">Message *</label>
-                    <textarea required rows={4} value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                      placeholder="Tell us how we can help…"
-                      className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 resize-none" />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-3.5 bg-rose-800 text-white rounded-xl font-bold hover:bg-rose-900 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-                  >
-                    {loading ? (
-                      <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending…</>
-                    ) : (
-                      <><Send size={16} /> Send Message</>
-                    )}
-                  </button>
-                  <p className="text-xs text-stone-400 text-center">
-                    Or WhatsApp us directly for instant help →{' '}
-                    <a href="https://wa.me/918298308314" className="text-rose-600 hover:underline">+91 82983 08314</a>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">Message Sent!</h2>
+                  <p className="text-gray-500 text-sm mb-6">
+                    Thank you, {form.name}. We'll get back to you within 24 hours.
                   </p>
-                </form>
-              </>
-            )}
+                  <div className="space-y-3">
+                    <a href={`https://wa.me/918790125438?text=${encodeURIComponent(waMsg)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full max-w-xs mx-auto py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors text-sm">
+                      <MessageCircle size={16} /> Chat on WhatsApp Now
+                    </a>
+                    <Link href="/fabrics"
+                      className="block text-center text-sm text-gray-400 hover:text-gray-600 mt-2">
+                      Browse Fabrics →
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Send a Message</h2>
+                  <p className="text-sm text-gray-400 mb-6">We reply within 24 hours on working days.</p>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Full Name *</label>
+                        <input required value={form.name} onChange={e => upd('name', e.target.value)}
+                          placeholder="Lakshmi Devi"
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Phone Number</label>
+                        <input type="tel" value={form.phone} onChange={e => upd('phone', e.target.value)}
+                          placeholder="9876543210"
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Email Address</label>
+                        <input type="email" value={form.email} onChange={e => upd('email', e.target.value)}
+                          placeholder="lakshmi@gmail.com"
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Subject</label>
+                        <select value={form.subject} onChange={e => upd('subject', e.target.value)}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white">
+                          <option value="">Select a topic…</option>
+                          {SUBJECTS.map(s => <option key={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Message *</label>
+                        <textarea required value={form.message} onChange={e => upd('message', e.target.value)}
+                          rows={5} placeholder="Tell us how we can help you…"
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none" />
+                      </div>
+                    </div>
+
+                    {error && <p className="text-xs text-red-500">{error}</p>}
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button type="submit" disabled={loading}
+                        className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
+                        {loading
+                          ? <><Loader2 size={16} className="animate-spin" /> Sending…</>
+                          : <><Send size={15} /> Send Message</>}
+                      </button>
+                      <a href={`https://wa.me/918790125438?text=${encodeURIComponent(waMsg)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 px-5 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors text-sm">
+                        <MessageCircle size={15} /> WhatsApp
+                      </a>
+                    </div>
+                  </form>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="py-8 border-t bg-white mt-8">
-        <div className="max-w-6xl mx-auto px-4 text-center text-gray-400 text-sm">
-          <p className="font-semibold text-gray-600 mb-1">GoFabrikos | Prop: Lakshmi Sowjanya Aaki</p>
-          <p>3rd Floor, Shop No. 346, Sri Vasavi WCS, Mangalagiri Road, Guntur – 522001, AP</p>
-        </div>
-      </footer>
     </div>
   )
 }

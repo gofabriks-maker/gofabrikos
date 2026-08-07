@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
   Minus, Plus, Trash2, ShoppingBag, ArrowRight,
-  Tag, Loader2, CheckCircle, MapPin
+  Tag, Loader2, CheckCircle, MapPin, CreditCard
 } from 'lucide-react'
 
 interface CartItem {
@@ -17,6 +17,17 @@ interface CartItem {
   image: string
 }
 
+declare global {
+  interface Window {
+    Cashfree?: {
+      PGCheckout: (config: {
+        paymentSessionId: string
+        redirectTarget?: string
+      }) => void
+    }
+  }
+}
+
 export default function CartPage() {
   const router = useRouter()
   const [cart,      setCart]      = useState<CartItem[]>([])
@@ -25,6 +36,7 @@ export default function CartPage() {
   const [couponErr, setCouponErr] = useState('')
   const [placing,   setPlacing]   = useState(false)
   const [showForm,  setShowForm]  = useState(false)
+  const [cfLoaded,  setCfLoaded]  = useState(false)
   const [form, setForm] = useState({
     name: '', phone: '', email: '',
     address: '', city: '', state: '', pincode: '',
@@ -33,6 +45,17 @@ export default function CartPage() {
 
   useEffect(() => {
     setCart(JSON.parse(localStorage.getItem('gofabrikos_cart') || '[]'))
+  }, [])
+
+  // Load Cashfree JS SDK
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (document.getElementById('cashfree-sdk')) { setCfLoaded(true); return }
+    const script = document.createElement('script')
+    script.id  = 'cashfree-sdk'
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js'
+    script.onload = () => setCfLoaded(true)
+    document.head.appendChild(script)
   }, [])
 
   function saveCart(updated: CartItem[]) {
@@ -48,10 +71,10 @@ export default function CartPage() {
     saveCart(cart.filter(i => i.slug !== slug))
   }
 
-  const subtotal     = cart.reduce((s, i) => s + i.price * i.qty, 0)
-  const discount     = couponOk ? Math.round(subtotal * 0.1) : 0
-  const delivery     = subtotal >= 4999 ? 0 : 99
-  const total        = subtotal - discount + delivery
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
+  const discount = couponOk ? Math.round(subtotal * 0.1) : 0
+  const delivery = subtotal >= 4999 ? 0 : 99
+  const total    = subtotal - discount + delivery
 
   function applyCoupon() {
     if (coupon.trim().toUpperCase() === 'NAARI10') {
@@ -71,6 +94,7 @@ export default function CartPage() {
 
     setPlacing(true)
     try {
+      // Step 1: Create order in Supabase
       const res = await fetch('/api/orders', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -97,10 +121,43 @@ export default function CartPage() {
       const data = await res.json()
       if (!res.ok) { alert(data.error || 'Failed to place order'); setPlacing(false); return }
 
-      // Clear cart
+      const { orderId } = data
+
+      // Step 2: COD — go directly to confirmation
+      if (form.paymentMode === 'cod') {
+        localStorage.removeItem('gofabrikos_cart')
+        router.push(`/order-confirmation?id=${orderId}`)
+        return
+      }
+
+      // Step 3: Online payment — create Cashfree session
+      const cfRes = await fetch('/api/cashfree/create-order', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          orderAmount:   total,
+          customerName:  form.name,
+          customerPhone: form.phone,
+          customerEmail: form.email,
+        }),
+      })
+      const cfData = await cfRes.json()
+      if (!cfRes.ok) { alert(cfData.error || 'Payment failed'); setPlacing(false); return }
+
+      // Step 4: Open Cashfree checkout popup
       localStorage.removeItem('gofabrikos_cart')
-      // Redirect to confirmation
-      router.push(`/order-confirmation?id=${data.orderId}`)
+
+      if (window.Cashfree) {
+        window.Cashfree.PGCheckout({
+          paymentSessionId: cfData.paymentSessionId,
+          redirectTarget:   '_modal',
+        })
+      } else {
+        // Fallback: redirect to confirmation (payment verified via webhook)
+        router.push(`/order-confirmation?id=${orderId}`)
+      }
+
     } catch {
       alert('Something went wrong. Please try again.')
       setPlacing(false)
@@ -123,7 +180,8 @@ export default function CartPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-          <ShoppingBag size={22} /> My Cart <span className="text-gray-400 font-normal text-lg">({cart.length} item{cart.length > 1 ? 's' : ''})</span>
+          <ShoppingBag size={22} /> My Cart
+          <span className="text-gray-400 font-normal text-lg">({cart.length} item{cart.length > 1 ? 's' : ''})</span>
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -228,24 +286,52 @@ export default function CartPage() {
                   </div>
                 ))}
 
+                {/* Payment Mode */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Payment Mode</label>
-                  <div className="flex gap-2">
-                    {[['cod','Cash on Delivery'],['upi','UPI (5% off)']].map(([val, lbl]) => (
-                      <button key={val} onClick={() => upd('paymentMode', val)}
-                        className={`flex-1 py-2 text-xs font-medium rounded-xl border transition-colors ${form.paymentMode === val ? 'bg-rose-600 text-white border-rose-600' : 'border-gray-200 text-gray-600 hover:border-rose-300'}`}>
-                        {lbl}
-                      </button>
-                    ))}
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Payment Mode</label>
+                  <div className="grid grid-cols-1 gap-2">
+
+                    {/* COD */}
+                    <button onClick={() => upd('paymentMode', 'cod')}
+                      className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors ${form.paymentMode === 'cod' ? 'bg-rose-50 border-rose-500' : 'border-gray-200 hover:border-rose-300'}`}>
+                      <span className="text-xl">💵</span>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">Cash on Delivery</p>
+                        <p className="text-xs text-gray-400">Pay when your fabric arrives</p>
+                      </div>
+                      {form.paymentMode === 'cod' && <CheckCircle size={16} className="ml-auto text-rose-500" />}
+                    </button>
+
+                    {/* Online (Cashfree) */}
+                    <button onClick={() => upd('paymentMode', 'upi')}
+                      className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors ${form.paymentMode === 'upi' ? 'bg-rose-50 border-rose-500' : 'border-gray-200 hover:border-rose-300'}`}>
+                      <CreditCard size={20} className="text-indigo-500" />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">UPI / Card / Netbanking</p>
+                        <p className="text-xs text-gray-400">GPay, PhonePe, Paytm, Cards &amp; more</p>
+                      </div>
+                      {form.paymentMode === 'upi' && <CheckCircle size={16} className="ml-auto text-rose-500" />}
+                    </button>
+
                   </div>
                 </div>
 
                 <button onClick={placeOrder} disabled={placing}
                   className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
                   {placing
-                    ? <><Loader2 size={16} className="animate-spin" /> Placing Order…</>
-                    : <>Place Order — ₹{total.toLocaleString('en-IN')} <ArrowRight size={16} /></>}
+                    ? <><Loader2 size={16} className="animate-spin" /> Processing…</>
+                    : form.paymentMode === 'cod'
+                      ? <>Place Order — ₹{total.toLocaleString('en-IN')} <ArrowRight size={16} /></>
+                      : <>Pay ₹{total.toLocaleString('en-IN')} Online <CreditCard size={16} /></>}
                 </button>
+
+                {form.paymentMode === 'upi' && (
+                  <div className="flex items-center justify-center gap-3 pt-1">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%28standalone%29.svg/200px-Paytm_Logo_%28standalone%29.svg.png" alt="Paytm" className="h-5 object-contain opacity-60" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/200px-Google_Pay_Logo.svg.png" alt="GPay" className="h-5 object-contain opacity-60" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/PhonePe_Logo.svg/200px-PhonePe_Logo.svg.png" alt="PhonePe" className="h-5 object-contain opacity-60" />
+                  </div>
+                )}
               </div>
             ) : (
               <button onClick={() => setShowForm(true)}
@@ -254,7 +340,7 @@ export default function CartPage() {
               </button>
             )}
 
-            <p className="text-xs text-gray-400 text-center">🔒 Safe & secure checkout</p>
+            <p className="text-xs text-gray-400 text-center">🔒 Payments secured by Cashfree</p>
           </div>
         </div>
       </div>

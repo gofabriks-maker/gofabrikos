@@ -71,7 +71,7 @@ function EditRollModal({
   onClose: () => void
   onSaved: (updated: Roll) => void
 }) {
-  const [form, setForm]     = useState({ shade: '', available: '', reserved: '', damaged: '', rack: '' })
+  const [form, setForm]     = useState({ shade: '', total: '', available: '', reserved: '', damaged: '', rack: '', cost: '' })
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
   const [saved,  setSaved]  = useState(false)
@@ -79,10 +79,12 @@ function EditRollModal({
   useEffect(() => {
     if (roll) setForm({
       shade:     roll.shade,
+      total:     String(roll.total),
       available: String(roll.available),
       reserved:  String(roll.reserved),
       damaged:   String(roll.damaged),
       rack:      roll.rack,
+      cost:      String(roll.cost || ''),
     })
   }, [roll])
 
@@ -97,10 +99,12 @@ function EditRollModal({
       body:    JSON.stringify({
         id:               roll.id,
         shade_code:       form.shade,
+        total_metres:     Number(form.total || roll.total),
         available_metres: Number(form.available),
         reserved_metres:  Number(form.reserved || 0),
         damaged_metres:   Number(form.damaged  || 0),
         rack_location:    form.rack,
+        cost_price:       form.cost ? Number(form.cost) : undefined,
       }),
     })
     const json = await res.json()
@@ -109,7 +113,7 @@ function EditRollModal({
     setSaved(true)
     const avail = Number(form.available)
     const status: Roll['status'] = avail === 0 ? 'exhausted' : avail < 15 ? 'low' : 'active'
-    onSaved({ ...roll, shade: form.shade, available: avail, reserved: Number(form.reserved || 0), damaged: Number(form.damaged || 0), rack: form.rack, status })
+    onSaved({ ...roll, shade: form.shade, total: Number(form.total || roll.total), available: avail, reserved: Number(form.reserved || 0), damaged: Number(form.damaged || 0), rack: form.rack, cost: form.cost ? Number(form.cost) : roll.cost, status })
     setTimeout(() => { setSaved(false); onClose() }, 800)
   }
 
@@ -125,16 +129,18 @@ function EditRollModal({
         {error && <p className="text-sm text-red-600 mb-3">✕ {error}</p>}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { key: 'shade',     label: 'Shade Code',          placeholder: 'e.g. BAN-001' },
-            { key: 'rack',      label: 'Rack Location',        placeholder: 'e.g. R-A1' },
-            { key: 'available', label: 'Available Metres *',   placeholder: 'e.g. 50', type: 'number' },
-            { key: 'reserved',  label: 'Reserved Metres',      placeholder: '0',       type: 'number' },
-            { key: 'damaged',   label: 'Damaged Metres',       placeholder: '0',       type: 'number' },
+            { key: 'shade',     label: 'Shade Code',          placeholder: 'e.g. BAN-001',  type: 'text'   },
+            { key: 'rack',      label: 'Rack Location',        placeholder: 'e.g. R-A1',     type: 'text'   },
+            { key: 'total',     label: 'Total Metres',         placeholder: 'e.g. 100',      type: 'number' },
+            { key: 'cost',      label: 'Cost Price (₹/metre)', placeholder: 'e.g. 900',      type: 'number' },
+            { key: 'available', label: 'Available Metres *',   placeholder: 'e.g. 50',       type: 'number' },
+            { key: 'reserved',  label: 'Reserved Metres',      placeholder: '0',             type: 'number' },
+            { key: 'damaged',   label: 'Damaged Metres',       placeholder: '0',             type: 'number' },
           ].map(({ key, label, placeholder, type }) => (
-            <div key={key} className={key === 'shade' || key === 'rack' ? '' : ''}>
+            <div key={key}>
               <label className="block text-xs font-semibold text-stone-500 mb-1">{label}</label>
               <input
-                type={type || 'text'}
+                type={type}
                 placeholder={placeholder}
                 value={(form as any)[key]}
                 onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}

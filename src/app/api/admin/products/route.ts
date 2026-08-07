@@ -129,6 +129,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Auto-create inventory roll so the new product appears in Inventory immediately
+    if (data?.id) {
+      const productName = name.trim()
+      const shadeCode = productName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 3) + '-001'
+      const { count } = await supabase.from('gf_inventory').select('*', { count: 'exact', head: true })
+      const rollNum = 'RL-' + new Date().getFullYear() + '-' + String((count || 0) + 1).padStart(4, '0')
+      const stockAmt = stock ? Number(stock) : 0
+      await supabase.from('gf_inventory').insert({
+        product_id:       data.id,
+        roll_number:      rollNum,
+        shade_code:       shadeCode,
+        total_metres:     stockAmt,
+        available_metres: stockAmt,
+        reserved_metres:  0,
+        damaged_metres:   0,
+        cost_price:       costPrice ? Number(costPrice) : null,
+        status:           stockAmt === 0 ? 'exhausted' : stockAmt < 15 ? 'low' : 'active',
+        rack_location:    null,
+        received_date:    new Date().toISOString().split('T')[0],
+      })
+    }
+
     return NextResponse.json({ data }, { status: 201 })
   } catch (err) {
     console.error('POST /api/admin/products error:', err)

@@ -5,8 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   Heart, ShoppingBag, Star, MessageCircle, Share2,
-  Shield, Truck, RotateCcw, Minus, Plus,
-  Check, Flame, Sparkles, ChevronLeft, ChevronRight, ZoomIn, X
+  BadgeCheck, Truck, RotateCcw, Minus, Plus,
+  Check, Flame, Sparkles, ChevronLeft, ChevronRight, ZoomIn, X, Eye, Users
 } from 'lucide-react'
 
 interface Product {
@@ -39,6 +39,8 @@ export default function FabricDetailClient({ product: p }: { product: Product })
   const [addedToCart,  setAddedToCart]  = useState(false)
   const [lightbox,     setLightbox]     = useState(false)
   const [copied,       setCopied]       = useState(false)
+  // Simulated live engagement (replace with real data when analytics are wired)
+  const viewingNow = Math.floor(Math.random() * 18) + 3
 
   const discount = p.mrp > p.price
     ? Math.round(((p.mrp - p.price) / p.mrp) * 100)
@@ -127,9 +129,21 @@ export default function FabricDetailClient({ product: p }: { product: Product })
               <p className="text-xs text-gray-400 mt-0.5">Inclusive of all taxes · Free delivery above ₹499</p>
             </div>
 
+            {/* Live engagement bar */}
+            <div className="flex items-center gap-3 text-xs text-stone-500">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
+                <strong className="text-stone-700">{viewingNow}</strong> people viewing now
+              </span>
+              <span>·</span>
+              <span className="flex items-center gap-1"><Star size={11} className="text-amber-400 fill-amber-400" />
+                {p.mrp > 0 ? 'Popular pick' : 'New arrival'}
+              </span>
+            </div>
+
             {/* Badges */}
             <div className="flex flex-wrap gap-2">
-              <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-full flex items-center gap-1"><Shield size={10} /> Verified Seller</span>
+              <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-full flex items-center gap-1"><BadgeCheck size={10} /> GoFabrikos Certified</span>
               <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full flex items-center gap-1"><Truck size={10} /> Free Ship ₹499+</span>
               <span className="text-xs bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded-full flex items-center gap-1"><RotateCcw size={10} /> 7-Day Returns</span>
             </div>

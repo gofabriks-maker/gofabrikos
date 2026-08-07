@@ -1,8 +1,9 @@
 'use client'
 import { useState, useMemo, useEffect } from 'react'
+import Link from 'next/link'
 import {
   Search, Plus, AlertTriangle, Package, BarChart3,
-  Eye, Scissors, QrCode, Download, Loader2, X
+  Eye, Scissors, QrCode, Download, Loader2, X, Edit2, Save, Check
 } from 'lucide-react'
 
 interface Roll {
@@ -10,6 +11,7 @@ interface Roll {
   rollNo:    string
   product:   string
   category:  string
+  slug:      string
   shade:     string
   total:     number
   available: number
@@ -46,6 +48,7 @@ function mapRow(r: any): Roll {
     rollNo:    r.roll_number || '',
     product:   p.name || 'Unknown',
     category:  p.category || '',
+    slug:      p.slug || '',
     shade:     r.shade_code || '',
     total:     Number(r.total_metres) || 0,
     available: avail,
@@ -58,6 +61,103 @@ function mapRow(r: any): Roll {
     productId: r.product_id || '',
     image:     image || undefined,
   }
+}
+
+// ── Edit Roll Modal ─────────────────────────────────────────────────────────
+function EditRollModal({
+  roll, onClose, onSaved,
+}: {
+  roll: Roll | null
+  onClose: () => void
+  onSaved: (updated: Roll) => void
+}) {
+  const [form, setForm]     = useState({ shade: '', available: '', reserved: '', damaged: '', rack: '' })
+  const [saving, setSaving] = useState(false)
+  const [error,  setError]  = useState('')
+  const [saved,  setSaved]  = useState(false)
+
+  useEffect(() => {
+    if (roll) setForm({
+      shade:     roll.shade,
+      available: String(roll.available),
+      reserved:  String(roll.reserved),
+      damaged:   String(roll.damaged),
+      rack:      roll.rack,
+    })
+  }, [roll])
+
+  if (!roll) return null
+
+  async function handleSave() {
+    if (!form.available) return setError('Available metres is required')
+    setSaving(true); setError('')
+    const res  = await fetch('/api/admin/inventory', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        id:               roll.id,
+        shade_code:       form.shade,
+        available_metres: Number(form.available),
+        reserved_metres:  Number(form.reserved || 0),
+        damaged_metres:   Number(form.damaged  || 0),
+        rack_location:    form.rack,
+      }),
+    })
+    const json = await res.json()
+    setSaving(false)
+    if (!res.ok) { setError(json.error || 'Save failed'); return }
+    setSaved(true)
+    const avail = Number(form.available)
+    const status: Roll['status'] = avail === 0 ? 'exhausted' : avail < 15 ? 'low' : 'active'
+    onSaved({ ...roll, shade: form.shade, available: avail, reserved: Number(form.reserved || 0), damaged: Number(form.damaged || 0), rack: form.rack, status })
+    setTimeout(() => { setSaved(false); onClose() }, 800)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 z-10">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-lg font-bold text-stone-900">Edit Roll</h3>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-600"><X size={18} /></button>
+        </div>
+        <p className="text-sm text-stone-500 mb-4">{roll.rollNo} · {roll.product}</p>
+        {error && <p className="text-sm text-red-600 mb-3">✕ {error}</p>}
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { key: 'shade',     label: 'Shade Code',          placeholder: 'e.g. BAN-001' },
+            { key: 'rack',      label: 'Rack Location',        placeholder: 'e.g. R-A1' },
+            { key: 'available', label: 'Available Metres *',   placeholder: 'e.g. 50', type: 'number' },
+            { key: 'reserved',  label: 'Reserved Metres',      placeholder: '0',       type: 'number' },
+            { key: 'damaged',   label: 'Damaged Metres',       placeholder: '0',       type: 'number' },
+          ].map(({ key, label, placeholder, type }) => (
+            <div key={key} className={key === 'shade' || key === 'rack' ? '' : ''}>
+              <label className="block text-xs font-semibold text-stone-500 mb-1">{label}</label>
+              <input
+                type={type || 'text'}
+                placeholder={placeholder}
+                value={(form as any)[key]}
+                onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                className="w-full text-sm px-3 py-2 border border-stone-200 rounded-xl focus:outline-none focus:border-rose-400"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3 mt-5">
+          <button onClick={onClose} disabled={saving}
+            className="flex-1 py-2.5 border border-stone-200 rounded-xl text-sm text-stone-600 hover:bg-stone-50">
+            Cancel
+          </button>
+          <button onClick={handleSave} disabled={saving || saved}
+            className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60">
+            {saved    ? <><Check size={14} /> Saved!</> :
+             saving   ? <><Loader2 size={14} className="animate-spin" /> Saving…</> :
+                        <><Save size={14} /> Save Changes</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ── Add Roll Modal ─────────────────────────────────────────────────────────
@@ -145,17 +245,17 @@ function AddRollModal({ open, onClose, products, onAdded }: AddRollModalProps) {
 
 // ── Main Inventory Page ────────────────────────────────────────────────────
 export default function InventoryPage() {
-  const [rolls,    setRolls]   = useState<Roll[]>([])
-  const [products, setProducts]= useState<{ id: string; name: string; category: string }[]>([])
-  const [loading,  setLoading] = useState(true)
-  const [loadErr,  setLoadErr] = useState('')
+  const [rolls,    setRolls]    = useState<Roll[]>([])
+  const [products, setProducts] = useState<{ id: string; name: string; category: string }[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [loadErr,  setLoadErr]  = useState('')
+  const [editRoll, setEditRoll] = useState<Roll | null>(null)
 
   const [search,  setSearch]  = useState('')
   const [filter,  setFilter]  = useState('all')
   const [sortBy,  setSortBy]  = useState<'available' | 'total' | 'received'>('available')
   const [addOpen, setAddOpen] = useState(false)
 
-  // Fetch inventory rolls
   useEffect(() => {
     setLoading(true)
     fetch('/api/admin/inventory')
@@ -168,7 +268,6 @@ export default function InventoryPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Fetch product list for Add Roll modal
   useEffect(() => {
     fetch('/api/admin/products?limit=200')
       .then(r => r.json())
@@ -203,8 +302,13 @@ export default function InventoryPage() {
 
   const lowStockRolls = rolls.filter(r => ['low', 'exhausted'].includes(r.status))
 
+  function handleSaved(updated: Roll) {
+    setRolls(prev => prev.map(r => r.id === updated.id ? updated : r))
+  }
+
   return (
     <>
+      <EditRollModal roll={editRoll} onClose={() => setEditRoll(null)} onSaved={handleSaved} />
       <AddRollModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
@@ -234,10 +338,10 @@ export default function InventoryPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Total Rolls',      value: loading ? '…' : stats.totalRolls,  sub: 'Active rolls',    cls: 'bg-blue-50 text-blue-600',   icon: Package },
-            { label: 'Available Stock',  value: loading ? '…' : `${stats.totalMetres}m`, sub: 'Metres', cls: 'bg-green-50 text-green-600', icon: BarChart3 },
-            { label: 'Low Stock Alerts', value: loading ? '…' : stats.lowStock,    sub: 'Need restocking', cls: 'bg-amber-50 text-amber-600', icon: AlertTriangle },
-            { label: 'Inventory Value',  value: loading ? '…' : `₹${(stats.totalValue / 1000).toFixed(0)}K`, sub: 'At cost', cls: 'bg-rose-50 text-rose-600', icon: BarChart3 },
+            { label: 'Total Rolls',      value: loading ? '…' : stats.totalRolls,  cls: 'bg-blue-50 text-blue-600',   icon: Package },
+            { label: 'Available Stock',  value: loading ? '…' : `${stats.totalMetres}m`, cls: 'bg-green-50 text-green-600', icon: BarChart3 },
+            { label: 'Low Stock Alerts', value: loading ? '…' : stats.lowStock,    cls: 'bg-amber-50 text-amber-600', icon: AlertTriangle },
+            { label: 'Inventory Value',  value: loading ? '…' : `₹${(stats.totalValue / 1000).toFixed(0)}K`, cls: 'bg-rose-50 text-rose-600', icon: BarChart3 },
           ].map(k => (
             <div key={k.label} className="bg-white rounded-xl border border-stone-200 p-4">
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${k.cls}`}>
@@ -258,15 +362,15 @@ export default function InventoryPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               {lowStockRolls.map(r => (
-                <span key={r.id} className="text-xs bg-white border border-amber-200 text-amber-700 px-2 py-1 rounded-lg">
-                  {r.product} · <strong>{r.available}m</strong>
-                </span>
+                <button key={r.id} onClick={() => setEditRoll(r)}
+                  className="text-xs bg-white border border-amber-200 text-amber-700 px-2 py-1 rounded-lg hover:bg-amber-50 transition-colors">
+                  {r.product} · <strong>{r.available}m</strong> — click to update stock
+                </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Error */}
         {loadErr && (
           <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">✕ {loadErr}</div>
         )}
@@ -381,13 +485,36 @@ export default function InventoryPage() {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <button title="View" className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-stone-700">
-                              <Eye size={14} />
+                            {/* Edit — opens edit modal */}
+                            <button
+                              title="Edit stock"
+                              onClick={() => setEditRoll(roll)}
+                              className="p-1.5 rounded-lg hover:bg-rose-50 text-stone-400 hover:text-rose-600 transition-colors">
+                              <Edit2 size={14} />
                             </button>
-                            <button title="Cut" className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-rose-600">
+                            {/* View — opens product on frontend */}
+                            {roll.slug ? (
+                              <Link
+                                href={`/fabrics/${roll.slug}`}
+                                target="_blank"
+                                title="View on site"
+                                className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition-colors">
+                                <Eye size={14} />
+                              </Link>
+                            ) : (
+                              <button title="View on site" className="p-1.5 rounded-lg text-stone-200 cursor-not-allowed">
+                                <Eye size={14} />
+                              </button>
+                            )}
+                            {/* Cut & QR — coming soon */}
+                            <button title="Cut slip (coming soon)"
+                              onClick={() => alert('Cutting slip feature coming soon!')}
+                              className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-stone-600 transition-colors">
                               <Scissors size={14} />
                             </button>
-                            <button title="QR Code" className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-blue-600">
+                            <button title="QR code (coming soon)"
+                              onClick={() => alert('QR code feature coming soon!')}
+                              className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-blue-600 transition-colors">
                               <QrCode size={14} />
                             </button>
                           </div>

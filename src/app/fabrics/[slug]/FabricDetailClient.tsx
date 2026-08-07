@@ -126,7 +126,7 @@ export default function FabricDetailClient({ product: p }: { product: Product })
                   <span className="text-sm font-bold text-green-600">{discount}% off</span>
                 </>}
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">Inclusive of all taxes · Free delivery above ₹499</p>
+              <p className="text-xs text-gray-400 mt-0.5">Inclusive of all taxes · Free delivery above ₹4,999</p>
             </div>
 
             {/* Live engagement bar */}
@@ -144,7 +144,7 @@ export default function FabricDetailClient({ product: p }: { product: Product })
             {/* Badges */}
             <div className="flex flex-wrap gap-2">
               <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-full flex items-center gap-1"><BadgeCheck size={10} /> GoFabrikos Certified</span>
-              <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full flex items-center gap-1"><Truck size={10} /> Free Ship ₹499+</span>
+              <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full flex items-center gap-1"><Truck size={10} /> Free Ship ₹4999+</span>
               <span className="text-xs bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded-full flex items-center gap-1"><RotateCcw size={10} /> 7-Day Returns</span>
             </div>
 

@@ -7,8 +7,7 @@ import {
   Briefcase, MessageSquare, IndianRupee, FileBarChart,
   Receipt, Settings, Shield, ChevronLeft, ChevronRight,
   Bell, Search, Sun, Moon, LogOut, X, Scissors, Tag,
-  Star, BarChart3, Zap, AlertTriangle, TrendingUp,
-  Archive, CreditCard, Globe, HelpCircle, Activity
+  Star, BarChart3, Mail, Globe
 } from 'lucide-react'
 
 const NAV = [
@@ -27,7 +26,8 @@ const NAV = [
     items: [
       { href: '/admin/customers',  label: 'Customers',   icon: Users },
       { href: '/admin/wholesale',  label: 'Wholesale',   icon: Briefcase,      badge: 'wholesale' },
-      { href: '/admin/reviews',    label: 'Reviews',     icon: Star },
+      { href: '/admin/reviews',    label: 'Reviews',     icon: Star,           badge: 'reviews' },
+      { href: '/admin/contact',    label: 'Contact',     icon: Mail,           badge: 'contact' },
       { href: '/admin/messages',   label: 'Messages',    icon: MessageSquare,  badge: 'messages' },
     ],
   },
@@ -50,7 +50,7 @@ const NAV = [
   },
 ]
 
-type BadgeCounts = { orders: number; wholesale: number; messages: number }
+type BadgeCounts = { orders: number; wholesale: number; messages: number; contact: number; reviews: number }
 
 function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter()
@@ -114,7 +114,27 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [collapsed,  setCollapsed]  = useState(false)
   const [darkMode,   setDarkMode]   = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [badges] = useState<BadgeCounts>({ orders: 4, wholesale: 1, messages: 3 })
+  const [badges, setBadges] = useState<BadgeCounts>({ orders: 0, wholesale: 0, messages: 0, contact: 0, reviews: 0 })
+
+  // Load live badge counts
+  useEffect(() => {
+    async function loadBadges() {
+      try {
+        const res = await fetch('/api/admin/stats')
+        const j   = await res.json()
+        setBadges({
+          orders:    j.pendingOrders    || 0,
+          wholesale: j.newWholesale     || 0,
+          messages:  j.unreadMessages   || 0,
+          contact:   j.unreadContact    || 0,
+          reviews:   j.pendingReviews   || 0,
+        })
+      } catch {}
+    }
+    loadBadges()
+    const t = setInterval(loadBadges, 60_000)
+    return () => clearInterval(t)
+  }, [])
   const [mobileOpen, setMobileOpen] = useState(false)
 
   // Ctrl+K shortcut

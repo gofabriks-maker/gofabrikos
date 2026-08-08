@@ -7,7 +7,7 @@ const CATEGORY_CONFIG = [
   { name: 'Blouse Fabrics',   href: '/fabrics?category=Blouse',         count: '180+', img: 'https://images.unsplash.com/photo-1609505848912-b7c3b8b4beda?w=600&q=80' },
   { name: 'Lehenga Fabrics',  href: '/fabrics?category=Lehenga',        count: '220+', img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
   { name: 'Dress Materials',  href: '/fabrics?category=Dress+Material', count: '290+', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80' },
-  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         count: '410+', img: 'https://images.unsplash.com/photo-1553827669-9d2e67e1e3a3?w=600&q=80' },
+  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         count: '410+', img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
 ]
 
 const stats = [

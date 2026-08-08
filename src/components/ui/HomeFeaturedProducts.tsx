@@ -36,7 +36,6 @@ export default function HomeFeaturedProducts() {
       .from('gf_products')
       .select('id, name, slug, category, selling_price, mrp, cloudinary_url, is_featured')
       .eq('is_active', true)
-      .order('is_featured', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(4)
       .then(({ data, error }) => {

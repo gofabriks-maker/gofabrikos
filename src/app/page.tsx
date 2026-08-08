@@ -197,11 +197,11 @@ export default async function HomePage() {
               <div key={p.slug} className="card group relative">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl bg-gray-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={p.img}
+                    src={p.img || FALLBACK_IMG}
                     alt={p.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={(e: any) => { e.target.src = FALLBACK_IMG }}
                   />
                   {p.badge && (
                     <span className="absolute top-2.5 left-2.5 bg-primary text-white text-xs font-bold px-2 py-0.5 rounded">

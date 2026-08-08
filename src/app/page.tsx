@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import NewsletterForm from '@/components/ui/NewsletterForm'
-import { createAdminClient } from '@/lib/supabase-admin'
+import { createClient } from '@supabase/supabase-js'
 
 // ── Static fallbacks (shown if DB is empty or unreachable) ─────────────────────
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80'
@@ -54,7 +54,10 @@ export default async function HomePage() {
   let categoryCounts: Record<string, number> = {}
 
   try {
-    const supabase = createAdminClient()
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
 
     // Featured / newest active products
     const { data: products } = await supabase

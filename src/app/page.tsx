@@ -51,7 +51,6 @@ export default function HomePage() {
       supabase
         .from('gf_products')
         .select('*')
-        .eq('is_active', true)
         .limit(4)
         .then(({ data, error }) => {
           console.log('GF Products fetch:', { count: data?.length, error })

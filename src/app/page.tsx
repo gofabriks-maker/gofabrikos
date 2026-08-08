@@ -1,26 +1,13 @@
 import Link from 'next/link'
 import NewsletterForm from '@/components/ui/NewsletterForm'
-import { createClient } from '@supabase/supabase-js'
+import HomeFeaturedProducts from '@/components/ui/HomeFeaturedProducts'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
-// ── Static fallbacks (shown if DB is empty or unreachable) ─────────────────────
-const FALLBACK_IMG = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80'
-
-const STATIC_FEATURED = [
-  { name: 'Mull Chanderi Digital Print', category: 'Chanderi', price: 125, mrp: 150, img: 'https://images.unsplash.com/photo-1553827669-9d2e67e1e3a3?w=500&q=80', badge: '17% OFF', slug: 'mull-chanderi-digital-print' },
-  { name: 'Premium Georgette Floral',    category: 'Georgette', price: 185, mrp: 210, img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&q=80', badge: 'NEW',     slug: 'premium-georgette-floral' },
-  { name: 'Handblock Kalamkari Cotton',  category: 'Cotton',    price: 220, mrp: null, img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80', badge: null,      slug: 'kalamkari-cotton' },
-  { name: 'Banarasi Silk Brocade',       category: 'Banarasi',  price: 480, mrp: 615, img: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=500&q=80', badge: '22% OFF', slug: 'banarasi-silk-brocade' },
-]
-
-const CATEGORY_CONFIG: { name: string; href: string; img: string; dbKey: string }[] = [
-  { name: 'Saree Fabrics',    href: '/fabrics?category=Saree',          dbKey: 'Saree',          img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80' },
-  { name: 'Blouse Fabrics',   href: '/fabrics?category=Blouse',         dbKey: 'Blouse',         img: 'https://images.unsplash.com/photo-1609505848912-b7c3b8b4beda?w=600&q=80' },
-  { name: 'Lehenga Fabrics',  href: '/fabrics?category=Lehenga',        dbKey: 'Lehenga',        img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
-  { name: 'Dress Materials',  href: '/fabrics?category=Dress+Material', dbKey: 'Dress Material', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80' },
-  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         dbKey: 'Cotton',         img: 'https://images.unsplash.com/photo-1553827669-9d2e67e1e3a3?w=600&q=80' },
+const CATEGORY_CONFIG = [
+  { name: 'Saree Fabrics',    href: '/fabrics?category=Saree',          count: '340+', img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80' },
+  { name: 'Blouse Fabrics',   href: '/fabrics?category=Blouse',         count: '180+', img: 'https://images.unsplash.com/photo-1609505848912-b7c3b8b4beda?w=600&q=80' },
+  { name: 'Lehenga Fabrics',  href: '/fabrics?category=Lehenga',        count: '220+', img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
+  { name: 'Dress Materials',  href: '/fabrics?category=Dress+Material', count: '290+', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80' },
+  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         count: '410+', img: 'https://images.unsplash.com/photo-1553827669-9d2e67e1e3a3?w=600&q=80' },
 ]
 
 const stats = [
@@ -38,78 +25,7 @@ const trustItems = [
   { icon: '💬', title: 'WhatsApp Support', sub: '8 AM – 9 PM daily' },
 ]
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-function discountBadge(price: number, mrp: number | null): string | null {
-  if (!mrp || mrp <= price) return null
-  const pct = Math.round((1 - price / mrp) * 100)
-  return pct > 0 ? `${pct}% OFF` : null
-}
-
-// ── Page ───────────────────────────────────────────────────────────────────────
-export default async function HomePage() {
-
-  // ── Fetch live products from Supabase ──────────────────────────────────────
-  let featured = STATIC_FEATURED as {
-    name: string; category: string; price: number; mrp: number | null;
-    img: string; badge: string | null; slug: string
-  }[]
-
-  let categoryCounts: Record<string, number> = {}
-
-  try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // Featured / newest active products
-    const { data: products } = await supabase
-      .from('gf_products')
-      .select('id, name, slug, category, selling_price, mrp, cloudinary_url, is_featured')
-      .eq('is_active', true)
-      .order('is_featured', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(8)  // grab 8, pick best 4
-
-    if (products && products.length > 0) {
-      featured = products.slice(0, 4).map((p: any) => ({
-        name:     p.name,
-        category: p.category,
-        price:    p.selling_price,
-        mrp:      p.mrp || null,
-        img:      p.cloudinary_url || FALLBACK_IMG,
-        badge:    p.is_featured ? 'FEATURED' : discountBadge(p.selling_price, p.mrp),
-        slug:     p.slug,
-      }))
-    }
-
-    // Category counts
-    const { data: catData } = await supabase
-      .from('gf_products')
-      .select('category')
-      .eq('is_active', true)
-
-    if (catData) {
-      catData.forEach((r: any) => {
-        if (r.category) categoryCounts[r.category] = (categoryCounts[r.category] || 0) + 1
-      })
-    }
-  } catch {
-    // falls back to static data above
-  }
-
-  // Build category cards with live counts
-  const categories = CATEGORY_CONFIG.map(cat => ({
-    ...cat,
-    count: categoryCounts[cat.dbKey]
-      ? `${categoryCounts[cat.dbKey]}+`
-      : cat.dbKey === 'Saree'          ? '340+'
-      : cat.dbKey === 'Blouse'         ? '180+'
-      : cat.dbKey === 'Lehenga'        ? '220+'
-      : cat.dbKey === 'Dress Material' ? '290+'
-      : '410+',
-  }))
-
+export default function HomePage() {
   return (
     <>
       {/* ===== HERO ===== */}
@@ -175,7 +91,7 @@ export default async function HomePage() {
             <p className="text-gray-500 max-w-md mx-auto">From festive silks to everyday cotton — find the perfect fabric for every outfit.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {categories.map((cat) => (
+            {CATEGORY_CONFIG.map((cat) => (
               <Link key={cat.name} href={cat.href} className="group relative rounded-xl overflow-hidden aspect-[3/4] shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={cat.img} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -189,65 +105,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ===== FEATURED PRODUCTS ===== */}
+      {/* ===== FEATURED PRODUCTS (client component — fetches live from DB) ===== */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="section-title mb-3">Trending This Season</h2>
             <p className="text-gray-500">Fabrics our customers love most — handpicked for quality and style.</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-            {featured.map((p) => (
-              <div key={p.slug} className="card group relative">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl bg-gray-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.img || FALLBACK_IMG}
-                    alt={p.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  {p.badge && (
-                    <span className="absolute top-2.5 left-2.5 bg-primary text-white text-xs font-bold px-2 py-0.5 rounded">
-                      {p.badge}
-                    </span>
-                  )}
-                  <button className="absolute top-2.5 right-2.5 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-sm hover:bg-white hover:scale-110 transition-all">
-                    🤍
-                  </button>
-                </div>
-                <div className="p-3">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">{p.category}</div>
-                  <Link href={`/fabrics/${p.slug}`} className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 hover:text-primary transition-colors block mb-2">
-                    {p.name}
-                  </Link>
-                  <div className="flex items-baseline gap-1.5 mb-3">
-                    <span className="text-base font-bold text-primary">₹{p.price}</span>
-                    {p.mrp && p.mrp > p.price && (
-                      <span className="text-xs text-gray-400 line-through">₹{p.mrp}</span>
-                    )}
-                    <span className="text-xs text-gray-400">/m</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/fabrics/${p.slug}`}
-                      className="flex-1 bg-primary text-white text-xs font-semibold py-2 rounded-lg hover:bg-primary-dark transition-colors text-center"
-                    >
-                      View Details
-                    </Link>
-                    <a
-                      href={`https://wa.me/918790125438?text=Hi%2C%20I%20want%20to%20order%20${encodeURIComponent(p.name)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-9 h-9 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center justify-center text-sm transition-colors flex-shrink-0"
-                    >
-                      💬
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <HomeFeaturedProducts />
           <div className="text-center mt-10">
             <Link href="/fabrics" className="btn-primary !text-base !px-8 !py-3.5">
               View All Fabrics →

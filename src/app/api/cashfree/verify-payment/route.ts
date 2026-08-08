@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const secret = process.env.CASHFREE_SECRET_KEY!
 
     // Verify payment status with Cashfree
-    const cfRes = await fetch(`https://sandbox.cashfree.com/pg/orders/${cfOrderId}`, {
+    const cfRes = await fetch(`https://api.cashfree.com/pg/orders/${cfOrderId}`, {
       method:  'GET',
       headers: {
         'x-api-version':   '2023-08-01',

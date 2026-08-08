@@ -13,7 +13,7 @@ const categories = [
 const featured = [
   { name: 'Mull Chanderi Digital Print', category: 'Chanderi', price: 125, mrp: 150, rating: 4.9, reviews: 342, views: '8.3K', img: 'https://images.unsplash.com/photo-1553827669-9d2e67e1e3a3?w=500&q=80', badge: '17% OFF', slug: 'mull-chanderi-digital-print' },
   { name: 'Premium Georgette Floral', category: 'Georgette', price: 185, mrp: 210, rating: 4.7, reviews: 127, views: '5.1K', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&q=80', badge: 'NEW', slug: 'premium-georgette-floral' },
-  { name: 'Handblock Kalamkari Cotton', category: 'Cotton', price: 220, mrp: null, rating: 4.9, reviews: 89, views: '3.7K', img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80', badge: 'BESTSELLER', slug: 'kalamkari-cotton' },
+  { name: 'Handblock Kalamkari Cotton', category: 'Cotton', price: 220, mrp: null, rating: 4.9, reviews: 89, views: '3.7K', img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80', badge: null, slug: 'kalamkari-cotton' },
   { name: 'Banarasi Silk Brocade', category: 'Banarasi', price: 480, mrp: 615, rating: 5.0, reviews: 214, views: '12K', img: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=500&q=80', badge: '22% OFF', slug: 'banarasi-silk-brocade' },
 ]
 
@@ -115,7 +115,6 @@ export default function HomePage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="inline-block bg-red-50 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-3">Best Sellers</div>
             <h2 className="section-title mb-3">Trending This Season</h2>
             <p className="text-gray-500">Fabrics our customers love most — handpicked for quality and style.</p>
           </div>

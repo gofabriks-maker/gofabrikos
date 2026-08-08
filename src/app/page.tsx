@@ -17,8 +17,8 @@ const CATEGORY_CONFIG = [
   { name: 'Saree Fabrics',    href: '/fabrics?category=Saree',          count: '340+', img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80' },
   { name: 'Blouse Fabrics',   href: '/fabrics?category=Blouse',         count: '180+', img: 'https://images.unsplash.com/photo-1609505848912-b7c3b8b4beda?w=600&q=80' },
   { name: 'Lehenga Fabrics',  href: '/fabrics?category=Lehenga',        count: '220+', img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
-  { name: 'Dress Materials',  href: '/fabrics?category=Dress+Material', count: '290+', img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=600&q=80' },
-  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         count: '410+', img: 'https://images.unsplash.com/photo-1586495777744-4e6232bf2805?w=600&q=80' },
+  { name: 'Dress Materials',  href: '/fabrics?category=Dress+Material', count: '290+', img: 'https://images.unsplash.com/photo-1585487000160-6f15b96f5a0a?w=600&q=80' },
+  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         count: '410+', img: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=600&q=80' },
 ]
 
 const stats = [

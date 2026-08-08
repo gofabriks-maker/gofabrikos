@@ -61,7 +61,6 @@ export default async function HomePage() {
       .from('gf_products')
       .select('id, name, slug, category, selling_price, mrp, cloudinary_url, is_featured')
       .eq('is_active', true)
-      .eq('approval_status', 'approved')
       .order('is_featured', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(8)  // grab 8, pick best 4
@@ -83,7 +82,6 @@ export default async function HomePage() {
       .from('gf_products')
       .select('category')
       .eq('is_active', true)
-      .eq('approval_status', 'approved')
 
     if (catData) {
       catData.forEach((r: any) => {

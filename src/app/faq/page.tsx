@@ -31,7 +31,7 @@ const FAQ_CATEGORIES = [
     emoji: '🚚',
     faqs: [
       { q: 'How long does delivery take?', a: 'Standard: 3–5 business days (metro cities). Regional/remote areas: 5–8 business days. Express delivery (1–2 days) available at extra cost via Blue Dart.' },
-      { q: 'Is shipping free?', a: 'Free shipping on all orders above ₹999. Orders below ₹999 incur ₹80 shipping. Platinum B2B partners get free delivery pan-India on all orders.' },
+      { q: 'Is shipping free?', a: 'Free shipping on all orders above ₹4,999. Orders below ₹4,999 incur ₹99 shipping. Platinum B2B partners get free delivery pan-India on all orders.' },
       { q: 'Do you ship outside India?', a: 'We currently ship pan-India only. For international/export enquiries, contact us on WhatsApp — we handle export orders case by case.' },
       { q: 'How do I track my order?', a: 'You\'ll receive a tracking link via SMS/email after dispatch. You can also visit Track Order on our website and enter your Order ID.' },
       { q: 'What courier do you use?', a: 'We ship via DTDC and Blue Dart depending on the destination. Courier is chosen at the time of dispatch for the fastest route.' },

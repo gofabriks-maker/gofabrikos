@@ -25,7 +25,7 @@ const stats = [
 ]
 
 const trustItems = [
-  { icon: '📦', title: 'Free Shipping', sub: 'On orders above ₹999' },
+  { icon: '📦', title: 'Free Shipping', sub: 'On orders above ₹4,999' },
   { icon: '🧵', title: 'Free Swatch', sub: 'Try before you buy' },
   { icon: '📄', title: 'GST Invoice', sub: 'Auto-generated PDF' },
   { icon: '🔄', title: 'Easy Returns', sub: '7-day return policy' },

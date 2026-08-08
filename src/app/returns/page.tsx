@@ -35,7 +35,7 @@ export default function ReturnsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { icon: <RotateCcw size={20} className="text-emerald-600" />, title: '7-Day Returns', desc: 'Return within 7 days of delivery', bg: 'bg-emerald-50 border-emerald-200' },
-            { icon: <Truck size={20} className="text-blue-600" />, title: 'Free Shipping', desc: 'On orders above ₹999 pan-India', bg: 'bg-blue-50 border-blue-200' },
+            { icon: <Truck size={20} className="text-blue-600" />, title: 'Free Shipping', desc: 'On orders above ₹4,999 pan-India', bg: 'bg-blue-50 border-blue-200' },
             { icon: <Clock size={20} className="text-amber-600" />, title: '3–5 Day Refund', desc: 'Back to original payment method', bg: 'bg-amber-50 border-amber-200' },
           ].map(c => (
             <div key={c.title} className={`${c.bg} border rounded-2xl p-5 flex items-start gap-3`}>
@@ -135,8 +135,8 @@ export default function ReturnsPage() {
                   </thead>
                   <tbody>
                     {[
-                      { val: 'Below ₹999', charge: '₹80 flat' },
-                      { val: '₹999 and above', charge: 'FREE' },
+                      { val: 'Below ₹4,999', charge: '₹80 flat' },
+                      { val: '₹4,999 and above', charge: 'FREE' },
                       { val: 'Platinum B2B tier', charge: 'FREE (all orders)' },
                     ].map((row, i) => (
                       <tr key={row.val} className={i < 2 ? 'border-b border-stone-100' : ''}>

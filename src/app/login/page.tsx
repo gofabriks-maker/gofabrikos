@@ -228,7 +228,7 @@ export default function LoginPage() {
             <div className="space-y-4">
               {[
                 { icon: '🧾', text: 'GST invoice on every order' },
-                { icon: '🚚', text: 'Free shipping above ₹999' },
+                { icon: '🚚', text: 'Free shipping above ₹4,999' },
                 { icon: '✅', text: 'GST invoice on every order' },
                 { icon: '📦', text: '7-day easy return policy' },
               ].map(item => (

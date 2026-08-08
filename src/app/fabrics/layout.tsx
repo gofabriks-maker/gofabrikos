@@ -4,7 +4,7 @@ const BASE = 'https://www.gofabrikos.com'
 
 export const metadata: Metadata = {
   title: 'Buy Indian Fabric Online – Chanderi, Silk, Cotton, Georgette Per Metre',
-  description: 'Shop 2,400+ premium Indian fabrics online. Chanderi, Banarasi Silk, Kanjivaram, Cotton, Georgette, Linen & more. Priced per metre. GST invoice on every order. Free shipping above ₹999.',
+  description: 'Shop 2,400+ premium Indian fabrics online. Chanderi, Banarasi Silk, Kanjivaram, Cotton, Georgette, Linen & more. Priced per metre. GST invoice on every order. Free shipping above ₹4,999.',
   keywords: [
     'buy fabric online India',
     'chanderi fabric',

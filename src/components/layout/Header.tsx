@@ -60,7 +60,7 @@ export default function Header() {
       <div className="bg-primary text-white text-center text-xs py-2 px-4 font-medium tracking-wide">
         <span className="mx-3">✨ First Order Special Prices — Shop Now</span>
         <span className="hidden sm:inline">|</span>
-        <span className="mx-3 hidden sm:inline">🚚 Free shipping above ₹999</span>
+        <span className="mx-3 hidden sm:inline">🚚 Free shipping above ₹4,999</span>
         <span className="hidden md:inline">|</span>
         <span className="mx-3 hidden md:inline">📄 GST Invoice on every order</span>
       </div>

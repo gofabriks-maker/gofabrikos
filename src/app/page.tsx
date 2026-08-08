@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { createClient } from '@supabase/supabase-js'
 import NewsletterForm from '@/components/ui/NewsletterForm'
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80'
@@ -43,33 +42,23 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-      supabase
-        .from('gf_products')
-        .select('*')
-        .limit(4)
-        .then(({ data, error }) => {
-          console.log('GF Products fetch:', { count: data?.length, error })
-          if (!error && data && data.length > 0) {
-            setProducts(data.map((p: any) => ({
-              name:     p.name,
-              category: p.category,
-              price:    p.selling_price,
-              mrp:      p.mrp || null,
-              img:      p.cloudinary_url || FALLBACK_IMG,
-              slug:     p.slug,
-            })))
-          }
-          setLoading(false)
-        })
-    } catch (e) {
-      console.error('Supabase init error:', e)
-      setLoading(false)
-    }
+    fetch('/api/products/featured')
+      .then(r => r.json())
+      .then(({ products }) => {
+        console.log('Featured products:', products?.length)
+        if (products && products.length > 0) {
+          setProducts(products.map((p: any) => ({
+            name:     p.name,
+            category: p.category,
+            price:    p.selling_price,
+            mrp:      p.mrp || null,
+            img:      p.cloudinary_url || FALLBACK_IMG,
+            slug:     p.slug,
+          })))
+        }
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [])
 
   return (

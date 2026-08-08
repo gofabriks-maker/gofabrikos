@@ -2,6 +2,9 @@ import Link from 'next/link'
 import NewsletterForm from '@/components/ui/NewsletterForm'
 import { createClient } from '@supabase/supabase-js'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // ── Static fallbacks (shown if DB is empty or unreachable) ─────────────────────
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80'
 

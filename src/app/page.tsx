@@ -1,13 +1,24 @@
+'use client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@supabase/supabase-js'
 import NewsletterForm from '@/components/ui/NewsletterForm'
-import HomeFeaturedProducts from '@/components/ui/HomeFeaturedProducts'
+
+const FALLBACK_IMG = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80'
+
+const STATIC_PRODUCTS = [
+  { name: 'Mull Chanderi Digital Print', category: 'Chanderi', price: 125, mrp: 150, img: 'https://images.unsplash.com/photo-1553827669-9d2e67e1e3a3?w=500&q=80', slug: 'mull-chanderi-digital-print' },
+  { name: 'Premium Georgette Floral',    category: 'Georgette', price: 185, mrp: 210, img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&q=80', slug: 'premium-georgette-floral' },
+  { name: 'Handblock Kalamkari Cotton',  category: 'Cotton',    price: 220, mrp: null, img: FALLBACK_IMG, slug: 'kalamkari-cotton' },
+  { name: 'Banarasi Silk Brocade',       category: 'Banarasi',  price: 480, mrp: 615, img: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=500&q=80', slug: 'banarasi-silk-brocade' },
+]
 
 const CATEGORY_CONFIG = [
   { name: 'Saree Fabrics',    href: '/fabrics?category=Saree',          count: '340+', img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80' },
   { name: 'Blouse Fabrics',   href: '/fabrics?category=Blouse',         count: '180+', img: 'https://images.unsplash.com/photo-1609505848912-b7c3b8b4beda?w=600&q=80' },
   { name: 'Lehenga Fabrics',  href: '/fabrics?category=Lehenga',        count: '220+', img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
-  { name: 'Dress Materials',  href: '/fabrics?category=Dress+Material', count: '290+', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80' },
-  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         count: '410+', img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
+  { name: 'Dress Materials',  href: '/fabrics?category=Dress+Material', count: '290+', img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80' },
+  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         count: '410+', img: 'https://images.unsplash.com/photo-1614110991285-7a7e75e44577?w=600&q=80' },
 ]
 
 const stats = [
@@ -25,7 +36,43 @@ const trustItems = [
   { icon: '💬', title: 'WhatsApp Support', sub: '8 AM – 9 PM daily' },
 ]
 
+type Product = { name: string; category: string; price: number; mrp: number | null; img: string; slug: string }
+
 export default function HomePage() {
+  const [products, setProducts] = useState<Product[]>(STATIC_PRODUCTS)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      supabase
+        .from('gf_products')
+        .select('*')
+        .eq('is_active', true)
+        .limit(4)
+        .then(({ data, error }) => {
+          console.log('GF Products fetch:', { count: data?.length, error })
+          if (!error && data && data.length > 0) {
+            setProducts(data.map((p: any) => ({
+              name:     p.name,
+              category: p.category,
+              price:    p.selling_price,
+              mrp:      p.mrp || null,
+              img:      p.cloudinary_url || FALLBACK_IMG,
+              slug:     p.slug,
+            })))
+          }
+          setLoading(false)
+        })
+    } catch (e) {
+      console.error('Supabase init error:', e)
+      setLoading(false)
+    }
+  }, [])
+
   return (
     <>
       {/* ===== HERO ===== */}
@@ -34,11 +81,11 @@ export default function HomePage() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
           <div className="max-w-2xl">
             <div className="inline-block bg-primary/20 border border-primary/40 text-primary text-xs font-bold px-3 py-1.5 rounded-full mb-4 uppercase tracking-widest">
-              ✨ India's Premier Fabric Store
+              ✨ India&apos;s Premier Fabric Store
             </div>
             <h1 className="font-playfair text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5">
               Dress Her in<br/>
-              <span className="text-gold">India's Finest Fabrics</span>
+              <span className="text-gold">India&apos;s Finest Fabrics</span>
             </h1>
             <p className="text-gray-300 text-lg leading-relaxed mb-8 max-w-lg">
               From Chanderi silks to digital prints — shop premium fabrics priced per meter. GST invoice on every order. Pan-India delivery.
@@ -105,14 +152,73 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== FEATURED PRODUCTS (client component — fetches live from DB) ===== */}
+      {/* ===== FEATURED PRODUCTS ===== */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="section-title mb-3">Trending This Season</h2>
             <p className="text-gray-500">Fabrics our customers love most — handpicked for quality and style.</p>
           </div>
-          <HomeFeaturedProducts />
+
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="rounded-xl overflow-hidden">
+                  <div className="aspect-[3/4] bg-gray-100 animate-pulse rounded-t-xl" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 bg-gray-100 animate-pulse rounded w-1/2" />
+                    <div className="h-4 bg-gray-100 animate-pulse rounded w-3/4" />
+                    <div className="h-4 bg-gray-100 animate-pulse rounded w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              {products.map((p) => (
+                <div key={p.slug} className="card group relative">
+                  <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl bg-gray-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.img || FALLBACK_IMG}
+                      alt={p.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">{p.category}</div>
+                    <Link href={`/fabrics/${p.slug}`} className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 hover:text-primary transition-colors block mb-2">
+                      {p.name}
+                    </Link>
+                    <div className="flex items-baseline gap-1.5 mb-3">
+                      <span className="text-base font-bold text-primary">₹{p.price}</span>
+                      {p.mrp && p.mrp > p.price && (
+                        <span className="text-xs text-gray-400 line-through">₹{p.mrp}</span>
+                      )}
+                      <span className="text-xs text-gray-400">/m</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/fabrics/${p.slug}`}
+                        className="flex-1 bg-primary text-white text-xs font-semibold py-2 rounded-lg hover:bg-primary-dark transition-colors text-center"
+                      >
+                        View Details
+                      </Link>
+                      <a
+                        href={`https://wa.me/918790125438?text=Hi%2C%20I%20want%20to%20order%20${encodeURIComponent(p.name)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-9 h-9 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center justify-center text-sm transition-colors flex-shrink-0"
+                      >
+                        💬
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="text-center mt-10">
             <Link href="/fabrics" className="btn-primary !text-base !px-8 !py-3.5">
               View All Fabrics →
@@ -135,7 +241,7 @@ export default function HomePage() {
                 <span className="text-gold">Ladies Fabric Visualizer</span>
               </h2>
               <p className="text-gray-300 mb-7 leading-relaxed">
-                India's first Ladies Fabric Frame Visualizer. Choose your saree fabric + blouse fabric and see the exact combination on a mannequin frame.
+                India&apos;s first Ladies Fabric Frame Visualizer. Choose your saree fabric + blouse fabric and see the exact combination on a mannequin frame.
               </p>
               <div className="space-y-2.5 mb-8">
                 {['Choose your Saree fabric from 2,400+ designs','Choose your Blouse fabric to match','See the combination on a real mannequin frame','Add both to cart or share via WhatsApp'].map((step, i) => (
@@ -170,57 +276,34 @@ export default function HomePage() {
           <h2 className="font-playfair text-3xl font-bold text-white mb-3">Join the GoFabrikos Family</h2>
           <p className="text-gray-400 mb-10">New arrivals, exclusive deals &amp; fabric tips — directly on WhatsApp. Choose how you&apos;d like to connect.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-            {/* Channel */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-7 flex flex-col items-center">
               <span className="text-3xl mb-3">📢</span>
               <h3 className="text-white font-bold text-lg mb-1">WhatsApp Channel</h3>
               <p className="text-gray-400 text-sm mb-5 text-center">Follow for new arrivals, offers &amp; fabric updates. One-way broadcasts from us.</p>
               <div className="bg-white rounded-xl p-3 mb-4 shadow">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=https://whatsapp.com/channel/0029VbDYKmD17Emu8TsBqI02"
-                  alt="Scan to follow GoFabrikos WhatsApp Channel"
-                  width={130}
-                  height={130}
-                />
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=https://whatsapp.com/channel/0029VbDYKmD17Emu8TsBqI02" alt="WhatsApp Channel QR" width={130} height={130} />
               </div>
               <p className="text-gray-500 text-xs mb-4">Scan with camera to follow</p>
-              <a
-                href="https://whatsapp.com/channel/0029VbDYKmD17Emu8TsBqI02"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
-              >
+              <a href="https://whatsapp.com/channel/0029VbDYKmD17Emu8TsBqI02" target="_blank" rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
                 📲 Follow Channel
               </a>
             </div>
-
-            {/* Group */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-7 flex flex-col items-center">
               <span className="text-3xl mb-3">👥</span>
               <h3 className="text-white font-bold text-lg mb-1">WhatsApp Group</h3>
               <p className="text-gray-400 text-sm mb-5 text-center">Join our community — ask questions, share fabric ideas &amp; get order help.</p>
               <div className="bg-white rounded-xl p-3 mb-4 shadow">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=https://chat.whatsapp.com/CxXx1iCbp1FDcQT3XhJbwY"
-                  alt="Scan to join GoFabrikos WhatsApp Group"
-                  width={130}
-                  height={130}
-                />
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=https://chat.whatsapp.com/CxXx1iCbp1FDcQT3XhJbwY" alt="WhatsApp Group QR" width={130} height={130} />
               </div>
               <p className="text-gray-500 text-xs mb-4">Scan with camera to join</p>
-              <a
-                href="https://chat.whatsapp.com/CxXx1iCbp1FDcQT3XhJbwY"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
-              >
+              <a href="https://chat.whatsapp.com/CxXx1iCbp1FDcQT3XhJbwY" target="_blank" rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
                 👥 Join Group
               </a>
             </div>
-
           </div>
         </div>
       </section>

@@ -16,8 +16,8 @@ const CATEGORY_CONFIG: { name: string; href: string; img: string; dbKey: string 
   { name: 'Saree Fabrics',    href: '/fabrics?category=Saree',          dbKey: 'Saree',          img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80' },
   { name: 'Blouse Fabrics',   href: '/fabrics?category=Blouse',         dbKey: 'Blouse',         img: 'https://images.unsplash.com/photo-1609505848912-b7c3b8b4beda?w=600&q=80' },
   { name: 'Lehenga Fabrics',  href: '/fabrics?category=Lehenga',        dbKey: 'Lehenga',        img: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
-  { name: 'Dress Materials',  href: '/fabrics?category=Dress+Material', dbKey: 'Dress Material', img: 'https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?w=600&q=80' },
-  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         dbKey: 'Cotton',         img: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=600&q=80' },
+  { name: 'Dress Materials',  href: '/fabrics?category=Dress+Material', dbKey: 'Dress Material', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80' },
+  { name: 'Cotton Fabrics',   href: '/fabrics?category=Cotton',         dbKey: 'Cotton',         img: 'https://images.unsplash.com/photo-1553827669-9d2e67e1e3a3?w=600&q=80' },
 ]
 
 const stats = [

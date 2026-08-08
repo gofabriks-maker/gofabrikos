@@ -34,9 +34,8 @@ export default function HomeFeaturedProducts() {
     )
     supabase
       .from('gf_products')
-      .select('id, name, slug, category, selling_price, mrp, cloudinary_url, is_featured')
+      .select('*')
       .eq('is_active', true)
-      .order('created_at', { ascending: false })
       .limit(4)
       .then(({ data, error }) => {
         if (!error && data && data.length > 0) {

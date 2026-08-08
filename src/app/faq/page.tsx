@@ -42,7 +42,7 @@ const FAQ_CATEGORIES = [
     emoji: '↩️',
     faqs: [
       { q: 'What is your return policy?', a: '7-day return window from the date of delivery. Fabric must be unused, uncut, and in original packaging with tags intact. Visit our Returns page for full process.' },
-      { q: 'Can I return a cut piece?', a: 'No. Once fabric is cut or washed, it cannot be returned. Please order a swatch first if you are unsure.' },
+      { q: 'Can I return a cut piece?', a: 'No. Once fabric is cut or washed, it cannot be returned. Please check the product photos and contact us before purchasing.' },
       { q: 'How long does a refund take?', a: 'Refund is processed within 3–5 business days after we receive and inspect the returned fabric. Amount credited to original payment method.' },
       { q: 'What if I receive a damaged/wrong item?', a: 'Contact us within 48 hours of delivery with a photo on WhatsApp (+91 82983 08314). We will replace or refund immediately — no questions asked.' },
     ],

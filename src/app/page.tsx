@@ -26,7 +26,6 @@ const stats = [
 
 const trustItems = [
   { icon: '📦', title: 'Free Shipping', sub: 'On orders above ₹4,999' },
-  { icon: '🧵', title: 'Free Swatch', sub: 'Try before you buy' },
   { icon: '📄', title: 'GST Invoice', sub: 'Auto-generated PDF' },
   { icon: '🔄', title: 'Easy Returns', sub: '7-day return policy' },
   { icon: '🏭', title: 'B2B Wholesale', sub: 'Bulk pricing available' },
@@ -49,7 +48,7 @@ export default function HomePage() {
               <span className="text-gold">India's Finest Fabrics</span>
             </h1>
             <p className="text-gray-300 text-lg leading-relaxed mb-8 max-w-lg">
-              From Chanderi silks to digital prints — shop premium fabrics priced per meter. GST invoice on every order. Free swatch before you buy.
+              From Chanderi silks to digital prints — shop premium fabrics priced per meter. GST invoice on every order. Pan-India delivery.
             </p>
             <div className="flex flex-wrap gap-4 mb-12">
               <Link href="/fabrics" className="btn-primary text-base !px-7 !py-3.5">
@@ -127,9 +126,6 @@ export default function HomePage() {
                   <img src={p.img} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   <span className="absolute top-2.5 left-2.5 bg-primary text-white text-xs font-bold px-2 py-0.5 rounded">{p.badge}</span>
                   <button className="absolute top-2.5 right-2.5 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-sm hover:bg-white hover:scale-110 transition-all">🤍</button>
-                  <button className="absolute bottom-2.5 left-1/2 -translate-x-1/2 bg-white/95 text-primary text-xs font-semibold px-3 py-1.5 rounded-full border border-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    🧵 Free Swatch
-                  </button>
                 </div>
                 <div className="p-3">
                   <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">{p.category}</div>
@@ -197,49 +193,6 @@ export default function HomePage() {
               <Link href="/visualizer" className="btn-gold !text-base !px-8 !py-3.5">
                 👗 Try Fabric Visualizer Free →
               </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== FREE SWATCH ===== */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-8 md:p-12 grid md:grid-cols-2 gap-10 items-center">
-            <div>
-              <div className="inline-block bg-red-100 text-primary text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-widest">Free Swatch Program</div>
-              <h2 className="section-title mb-4">Touch It Before You Buy It</h2>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                Not sure about the fabric? Order up to 3 free swatches delivered to your door. Get ₹50 off on each swatch when you buy the full fabric within 30 days.
-              </p>
-              <div className="flex gap-6 mb-8">
-                {[{icon:'📋',title:'Request',sub:'Select up to 3'},{icon:'📬',title:'Receive',sub:'In 2-3 days'},{icon:'🛒',title:'Buy & Save',sub:'₹50 off per swatch'}].map((step, i) => (
-                  <div key={i} className="text-center flex-1">
-                    <div className="text-2xl mb-1.5">{step.icon}</div>
-                    <div className="text-sm font-semibold text-gray-800">{step.title}</div>
-                    <div className="text-xs text-gray-500">{step.sub}</div>
-                  </div>
-                ))}
-              </div>
-              <Link href="/swatches" className="btn-primary !text-base">🧵 Request Free Swatches</Link>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { name: 'Mull Chanderi', price: '₹125/m', img: 'https://images.unsplash.com/photo-1553827669-9d2e67e1e3a3?w=300&q=80' },
-                { name: 'Georgette', price: '₹185/m', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300&q=80' },
-                { name: 'Kalamkari', price: '₹220/m', img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80' },
-                { name: 'Banarasi', price: '₹480/m', img: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=300&q=80' },
-                { name: 'Pure Cotton', price: '₹95/m', img: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=300&q=80' },
-                { name: 'Velvet Blouse', price: '₹280/m', img: 'https://images.unsplash.com/photo-1609505848912-b7c3b8b4beda?w=300&q=80' },
-              ].map((swatch) => (
-                <div key={swatch.name} className="rounded-lg overflow-hidden shadow-sm hover:scale-105 transition-transform cursor-pointer">
-                  <img src={swatch.img} alt={swatch.name} className="w-full h-24 object-cover" />
-                  <div className="bg-white p-2">
-                    <p className="text-xs font-semibold text-gray-700 truncate">{swatch.name}</p>
-                    <span className="text-xs text-primary font-semibold">{swatch.price}</span>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>

@@ -1,298 +1,550 @@
 'use client'
-import { useEffect, useState } from 'react'
-import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts'
-import {
-  IndianRupee, ShoppingBag, Users, Clock, TrendingUp,
-  Package, AlertTriangle, Layers, FileBarChart, Plus,
-  RefreshCw, ArrowUpRight
-} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import {
+  Package, ShoppingBag, Users, TrendingUp, Eye, RefreshCw,
+  CheckCircle, Clock, Truck, XCircle, ChevronDown, Search,
+  BarChart2, MessageSquare, Star, ArrowUpRight, Edit2, Save,
+  X, AlertCircle, Layers, Mail, Phone
+} from 'lucide-react'
 
-type Stats = {
-  today:    { revenue: number; orders: number }
-  month:    { revenue: number; orders: number; avgOrderValue: number }
-  totals:   { customers: number; products: number; pendingOrders: number; lowStockItems: number }
-  recentOrders: any[]
-  topProducts:  any[]
-  revenueChart: any[]
-  statusBreakdown: Record<string, number>
+// ── Types ─────────────────────────────────────────────────────────────────────
+type OrderStatus = 'confirmed' | 'processing' | 'packed' | 'shipped' | 'delivered' | 'cancelled'
+
+interface Order {
+  id: number
+  order_number: string
+  customer_name: string
+  customer_mobile: string
+  customer_email?: string
+  status: OrderStatus
+  total: number
+  payment_method: string
+  created_at: string
+  shipping_address: { city?: string; state?: string; pin?: string }
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending:   '#f59e0b',
-  confirmed: '#3b82f6',
-  processing:'#8b5cf6',
-  shipped:   '#06b6d4',
-  delivered: '#22c55e',
-  cancelled: '#ef4444',
+interface Product {
+  id: number
+  slug: string
+  name: string
+  price: number
+  stock_left: number
+  is_active: boolean
+  category: string
+  rating: number
+  ratings_count: number
 }
 
-const PIE_COLORS = ['#f59e0b','#3b82f6','#8b5cf6','#22c55e','#ef4444']
+interface ContactMessage {
+  id: number
+  name: string
+  mobile: string
+  email?: string
+  subject: string
+  message: string
+  status: string
+  created_at: string
+}
 
-// Fallback data shown while real data loads or if DB is empty
-const FALLBACK_CHART = [
-  { date:'Mon', revenue:28400, orders:18 },
-  { date:'Tue', revenue:32100, orders:22 },
-  { date:'Wed', revenue:24800, orders:16 },
-  { date:'Thu', revenue:41200, orders:28 },
-  { date:'Fri', revenue:38700, orders:25 },
-  { date:'Sat', revenue:52300, orders:34 },
-  { date:'Sun', revenue:45900, orders:30 },
+interface WholesaleEnquiry {
+  id: number
+  business_name: string
+  contact_name: string
+  mobile: string
+  city: string
+  monthly_volume?: string
+  status: string
+  created_at: string
+}
+
+// ── Status colours ────────────────────────────────────────────────────────────
+const STATUS_COLORS: Record<OrderStatus, string> = {
+  confirmed:  'bg-blue-100 text-blue-700',
+  processing: 'bg-yellow-100 text-yellow-700',
+  packed:     'bg-purple-100 text-purple-700',
+  shipped:    'bg-indigo-100 text-indigo-700',
+  delivered:  'bg-green-100 text-green-700',
+  cancelled:  'bg-red-100 text-red-700',
+}
+const STATUS_ICON: Record<OrderStatus, React.ReactNode> = {
+  confirmed:  <CheckCircle size={12} />,
+  processing: <Clock size={12} />,
+  packed:     <Package size={12} />,
+  shipped:    <Truck size={12} />,
+  delivered:  <CheckCircle size={12} />,
+  cancelled:  <XCircle size={12} />,
+}
+
+// ── Mock fallback data ────────────────────────────────────────────────────────
+const MOCK_ORDERS: Order[] = [
+  { id:1, order_number:'GF-2026-0001', customer_name:'Lakshmi Sowjanya', customer_mobile:'8298308314', customer_email:'sowjanya@gofabrikos.com', status:'delivered', total:3850, payment_method:'UPI', created_at:'2026-07-20T10:30:00Z', shipping_address:{ city:'Guntur', state:'Andhra Pradesh', pin:'522001' } },
+  { id:2, order_number:'GF-2026-0002', customer_name:'Priya Sharma', customer_mobile:'9876543210', status:'shipped', total:1299, payment_method:'Card', created_at:'2026-07-22T14:15:00Z', shipping_address:{ city:'Hyderabad', state:'Telangana', pin:'500001' } },
+  { id:3, order_number:'GF-2026-0003', customer_name:'Anita Reddy', customer_mobile:'8765432109', status:'processing', total:640, payment_method:'COD', created_at:'2026-07-25T09:00:00Z', shipping_address:{ city:'Vijayawada', state:'Andhra Pradesh', pin:'520001' } },
+  { id:4, order_number:'GF-2026-0004', customer_name:'Meena Patel', customer_mobile:'7654321098', status:'confirmed', total:2400, payment_method:'UPI', created_at:'2026-07-28T06:45:00Z', shipping_address:{ city:'Mumbai', state:'Maharashtra', pin:'400001' } },
 ]
 
-function fmt(n: number) {
-  if (n >= 100000) return `₹${(n/100000).toFixed(1)}L`
-  if (n >= 1000)   return `₹${(n/1000).toFixed(1)}K`
-  return `₹${n.toLocaleString('en-IN')}`
+const MOCK_PRODUCTS: Product[] = [
+  { id:1, slug:'mull-chanderi-digital-print',    name:'Mull Chanderi Digital Print',   price:125,  stock_left:28, is_active:true,  category:'Chanderi',   rating:4.7, ratings_count:2189 },
+  { id:2, slug:'pure-silk-banarasi-brocade',     name:'Pure Silk Banarasi Brocade',    price:850,  stock_left:14, is_active:true,  category:'Banarasi',   rating:4.8, ratings_count:1872 },
+  { id:3, slug:'handloom-khadi-cotton',          name:'Handloom Khadi Cotton',         price:280,  stock_left:52, is_active:true,  category:'Khadi',      rating:4.7, ratings_count:1456 },
+  { id:4, slug:'kanjivaram-pure-silk',           name:'Kanjivaram Pure Silk',          price:1200, stock_left:8,  is_active:true,  category:'Kanjivaram', rating:5.0, ratings_count:892 },
+  { id:5, slug:'georgette-embroidered',          name:'Georgette Embroidered',         price:320,  stock_left:35, is_active:true,  category:'Georgette',  rating:4.6, ratings_count:2034 },
+  { id:6, slug:'linen-slub-plain',               name:'Linen Slub Plain',              price:380,  stock_left:41, is_active:true,  category:'Linen',      rating:4.5, ratings_count:1123 },
+  { id:7, slug:'cotton-ikat-double',             name:'Cotton Ikat Double',            price:450,  stock_left:23, is_active:true,  category:'Ikat',       rating:4.8, ratings_count:1567 },
+  { id:8, slug:'mysore-silk-plain',              name:'Mysore Silk Plain',             price:680,  stock_left:19, is_active:true,  category:'Mysore Silk',rating:4.6, ratings_count:978 },
+  { id:9, slug:'handblock-dabu-print-cotton',    name:'Handblock Dabu Print Cotton',   price:380,  stock_left:45, is_active:true,  category:'Block Print', rating:4.7, ratings_count:1345 },
+  { id:10, slug:'pashmina-wool-blend',           name:'Pashmina Wool Blend',           price:950,  stock_left:12, is_active:true,  category:'Pashmina',   rating:4.9, ratings_count:654 },
+  { id:11, slug:'sambalpuri-ikat-silk',          name:'Sambalpuri Ikat Silk',          price:780,  stock_left:16, is_active:true,  category:'Ikat',       rating:4.8, ratings_count:789 },
+  { id:12, slug:'raw-silk-dupion',               name:'Raw Silk Dupion',               price:520,  stock_left:31, is_active:true,  category:'Raw Silk',   rating:4.7, ratings_count:1102 },
+]
+
+const MOCK_CONTACTS: ContactMessage[] = []
+
+const MOCK_WHOLESALE: WholesaleEnquiry[] = [
+  { id:1, business_name:'Sree Textiles',   contact_name:'Ravi Kumar',   mobile:'9876501234', city:'Vijayawada', monthly_volume:'₹2–5L', status:'new',       created_at:'2026-07-27T09:00:00Z' },
+  { id:2, business_name:'Rani Boutique',   contact_name:'Rani Devi',    mobile:'8765012345', city:'Guntur',     monthly_volume:'₹50K–1L',status:'contacted', created_at:'2026-07-25T14:00:00Z' },
+]
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmt(date: string) {
+  return new Date(date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+}
+function fmtCur(n: number) {
+  return '₹' + n.toLocaleString('en-IN')
 }
 
-export default function DashboardPage() {
-  const [stats, setStats]       = useState<Stats|null>(null)
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState<string|null>(null)
-  const [chartRange, setRange]  = useState<'7d'|'30d'>('7d')
-  const [lastRefresh, setLast]  = useState(new Date())
+// ── Main Component ────────────────────────────────────────────────────────────
+export default function AdminPage() {
+  const router = useRouter()
 
-  async function fetchStats() {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/admin/stats', { cache: 'no-store' })
-      if (!res.ok) throw new Error(await res.text())
-      const data = await res.json()
-      setStats(data)
-      setLast(new Date())
-    } catch (e: any) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
+  async function handleLogout() {
+    await fetch("/api/admin/login", { method: "DELETE" })
+    router.push("/admin/login")
+    router.refresh()
+  }
+  const [tab, setTab] = useState<'overview'|'orders'|'products'|'wholesale'|'messages'>('overview')
+  const [orders, setOrders]       = useState<Order[]>(MOCK_ORDERS)
+  const [products, setProducts]   = useState<Product[]>(MOCK_PRODUCTS)
+  const [wholesale, setWholesale] = useState<WholesaleEnquiry[]>(MOCK_WHOLESALE)
+  const [contacts,  setContacts]  = useState<ContactMessage[]>(MOCK_CONTACTS)
+  const [search, setSearch]       = useState('')
+  const [editingProduct, setEditingProduct] = useState<number|null>(null)
+  const [editPrice, setEditPrice]  = useState('')
+  const [editStock, setEditStock]  = useState('')
+  const [savingId, setSavingId]    = useState<number|null>(null)
+  const [updatingOrder, setUpdatingOrder] = useState<number|null>(null)
+
+  // Try to load from Supabase
+  useEffect(() => {
+    async function load() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const sb = createClient()
+        const [{ data: ord }, { data: prod }, { data: ws }, { data: cm }] = await Promise.all([
+          sb.from('orders').select('*').order('created_at', { ascending: false }),
+          sb.from('products').select('id,slug,name,price,stock_left,is_active,category,rating,ratings_count').order('id'),
+          sb.from('wholesale_enquiries').select('*').order('created_at', { ascending: false }),
+          sb.from('contact_messages').select('*').order('created_at', { ascending: false }),
+        ])
+        if (ord  && ord.length  > 0) setOrders(ord as Order[])
+        if (prod && prod.length > 0) setProducts(prod as Product[])
+        if (ws   && ws.length   > 0) setWholesale(ws as WholesaleEnquiry[])
+        if (cm   && cm.length   > 0) setContacts(cm as ContactMessage[])
+      } catch { /* use mock data */ }
     }
+    load()
+  }, [])
+
+  async function updateOrderStatus(id: number, status: OrderStatus) {
+    setUpdatingOrder(id)
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const sb = createClient()
+      await sb.from('orders').update({ status }).eq('id', id)
+    } catch {}
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o))
+    setUpdatingOrder(null)
   }
 
-  useEffect(() => { fetchStats() }, [])
+  async function saveProduct(id: number) {
+    setSavingId(id)
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const sb = createClient()
+      await sb.from('products').update({
+        price: Number(editPrice),
+        stock_left: Number(editStock),
+      }).eq('id', id)
+    } catch {}
+    setProducts(prev => prev.map(p => p.id === id
+      ? { ...p, price: Number(editPrice), stock_left: Number(editStock) }
+      : p))
+    setSavingId(null)
+    setEditingProduct(null)
+  }
 
-  const kpis = stats ? [
-    { label:'Today\'s Revenue',  value: fmt(stats.today.revenue),             sub:`${stats.today.orders} orders today`,    icon: IndianRupee, color:'bg-rose-50 text-rose-600' },
-    { label:'Monthly Revenue',   value: fmt(stats.month.revenue),             sub:`${stats.month.orders} orders this month`, icon: TrendingUp,  color:'bg-green-50 text-green-600' },
-    { label:'Total Customers',   value: stats.totals.customers.toLocaleString('en-IN'), sub:'Registered customers',    icon: Users,       color:'bg-blue-50 text-blue-600' },
-    { label:'Pending Orders',    value: stats.totals.pendingOrders.toString(), sub:'Needs action',                      icon: Clock,       color:'bg-amber-50 text-amber-600' },
-    { label:'Avg Order Value',   value: `₹${stats.month.avgOrderValue.toLocaleString('en-IN')}`, sub:'This month',    icon: ShoppingBag, color:'bg-purple-50 text-purple-600' },
-    { label:'Active Products',   value: stats.totals.products.toLocaleString('en-IN'), sub:'Listed on store',          icon: Layers,      color:'bg-teal-50 text-teal-600' },
-    { label:'Low Stock Items',   value: stats.totals.lowStockItems.toString(), sub:'Below threshold',                  icon: AlertTriangle,color:'bg-orange-50 text-orange-600' },
-    { label:'Today\'s Orders',   value: stats.today.orders.toString(),        sub:'Orders placed today',               icon: Package,     color:'bg-stone-50 text-stone-600' },
-  ] : []
+  async function toggleActive(id: number, current: boolean) {
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const sb = createClient()
+      await sb.from('products').update({ is_active: !current }).eq('id', id)
+    } catch {}
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: !current } : p))
+  }
 
-  const chartData = stats?.revenueChart?.length
-    ? stats.revenueChart.map(d => ({ ...d, date: d.date?.slice(5) }))
-    : FALLBACK_CHART
+  // Stats
+  const totalRevenue   = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0)
+  const pendingOrders  = orders.filter(o => !['delivered','cancelled'].includes(o.status)).length
+  const lowStock       = products.filter(p => p.stock_left < 15).length
+  const newEnquiries   = wholesale.filter(w => w.status === 'new').length
+  const newMessages    = contacts.filter(c => c.status === 'new').length
 
-  const pieData = stats ? Object.entries(stats.statusBreakdown).map(([name, value]) => ({ name, value })) : []
+  const TABS = [
+    { key:'overview',   label:'Overview',   icon:<BarChart2 size={15}/> },
+    { key:'orders',     label:'Orders',     icon:<ShoppingBag size={15}/>, badge: orders.length },
+    { key:'products',   label:'Products',   icon:<Package size={15}/>,    badge: lowStock },
+    { key:'wholesale',  label:'Wholesale',  icon:<Users size={15}/>,      badge: newEnquiries },
+    { key:'messages',   label:'Messages',   icon:<Mail size={15}/>,        badge: newMessages || undefined },
+  ]
+
+  const filteredOrders   = orders.filter(o =>
+    o.order_number.toLowerCase().includes(search.toLowerCase()) ||
+    o.customer_name.toLowerCase().includes(search.toLowerCase()) ||
+    o.customer_mobile.includes(search) ||
+    o.status.toLowerCase().includes(search.toLowerCase()))
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    p.category.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-stone-900">Dashboard</h2>
-          <p className="text-xs text-stone-400 mt-0.5">
-            {loading ? 'Loading live data…' : error ? '⚠️ Using cached data' : `Live · refreshed ${lastRefresh.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`}
-          </p>
+      <div className="bg-stone-900 text-white px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="text-stone-400 hover:text-white text-sm">← Website</Link>
+          <span className="text-stone-600">|</span>
+          <span className="font-bold text-lg">GoFabrikos Admin</span>
+          <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-semibold">DASHBOARD</span>
         </div>
-        <div className="flex gap-2">
-          <button onClick={fetchStats} disabled={loading}
-            className="flex items-center gap-1.5 text-sm border border-stone-200 bg-white text-stone-600 px-3 py-2 rounded-xl hover:bg-stone-50 disabled:opacity-50">
-            <RefreshCw size={13} className={loading?'animate-spin':''}/> Refresh
-          </button>
-          <Link href="/admin/products/add"
-            className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold px-4 py-2 rounded-xl">
-            <Plus size={14}/>Add Product
-          </Link>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-stone-400">Prop: Lakshmi Sowjanya Aaki · Guntur, AP</span>
+          <button onClick={handleLogout} className="text-xs bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg font-medium transition-colors">🔒 Logout</button>
         </div>
       </div>
 
-      {/* Error Banner */}
-      {error && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-700 flex items-center gap-2">
-          <AlertTriangle size={14}/>
-          Database not yet set up — showing demo data. Run the Phase 1 SQL schema in Supabase to see live data.
-          <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" className="underline font-semibold ml-auto">Open Supabase →</a>
+      {/* Tab Bar */}
+      <div className="bg-white border-b border-gray-200 px-6">
+        <div className="flex gap-1 overflow-x-auto">
+          {TABS.map(t => (
+            <button key={t.key} onClick={() => { setTab(t.key as typeof tab); setSearch('') }}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                tab === t.key ? 'border-stone-800 text-stone-900' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              {t.icon} {t.label}
+              {t.badge ? <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">{t.badge}</span> : null}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {loading ? (
-          Array.from({length:8}).map((_,i)=>(
-            <div key={i} className="bg-white rounded-xl border border-stone-200 p-4 animate-pulse">
-              <div className="h-7 bg-stone-100 rounded w-24 mb-2"/>
-              <div className="h-3 bg-stone-100 rounded w-32"/>
-            </div>
-          ))
-        ) : (
-          kpis.map(k=>(
-            <div key={k.label} className="bg-white rounded-xl border border-stone-200 p-4 hover:shadow-sm transition-shadow">
-              <div className="flex items-start justify-between mb-2">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${k.color}`}>
-                  <k.icon size={16}/>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+        {/* ── OVERVIEW ── */}
+        {tab === 'overview' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label:'Total Revenue',    value: fmtCur(totalRevenue),  icon:<TrendingUp size={20}/>,   color:'text-green-600',  bg:'bg-green-50' },
+                { label:'Pending Orders',   value: pendingOrders,          icon:<Clock size={20}/>,        color:'text-amber-600',  bg:'bg-amber-50' },
+                { label:'Total Products',   value: products.length,        icon:<Package size={20}/>,      color:'text-blue-600',   bg:'bg-blue-50' },
+                { label:'Low Stock Items',  value: lowStock,               icon:<AlertCircle size={20}/>,  color:'text-red-600',    bg:'bg-red-50' },
+              ].map(stat => (
+                <div key={stat.label} className="bg-white rounded-xl border border-gray-200 p-5">
+                  <div className={`w-10 h-10 rounded-lg ${stat.bg} ${stat.color} flex items-center justify-center mb-3`}>{stat.icon}</div>
+                  <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
+                  <div className="text-xs text-gray-500 mt-1">{stat.label}</div>
                 </div>
-              </div>
-              <p className="text-2xl font-bold text-stone-900">{k.value}</p>
-              <p className="text-xs font-semibold text-stone-500 mt-0.5">{k.label}</p>
-              <p className="text-xs text-stone-400">{k.sub}</p>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-3 gap-5">
-        {/* Revenue Chart */}
-        <div className="col-span-2 bg-white rounded-xl border border-stone-200 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-stone-900">Revenue Trend</h3>
-            <div className="flex gap-1 bg-stone-100 p-0.5 rounded-lg">
-              {(['7d','30d'] as const).map(r=>(
-                <button key={r} onClick={()=>setRange(r)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors
-                    ${chartRange===r?'bg-white text-stone-800 shadow-sm':'text-stone-400'}`}>
-                  {r}
-                </button>
               ))}
             </div>
-          </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={chartData} margin={{top:5,right:5,left:-15,bottom:0}}>
-              <defs>
-                <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#e11d48" stopOpacity={0.15}/>
-                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
-              <XAxis dataKey="date" tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false} tickFormatter={v=>`₹${(v/1000).toFixed(0)}K`}/>
-              <Tooltip contentStyle={{borderRadius:10,border:'1px solid #e2e8f0',fontSize:12}}
-                formatter={(v:number)=>[`₹${v.toLocaleString('en-IN')}`,'']}/>
-              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#e11d48" strokeWidth={2.5}
-                fill="url(#revGrad)" dot={{r:3,fill:'#e11d48'}}/>
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
 
-        {/* Order Status Pie */}
-        <div className="bg-white rounded-xl border border-stone-200 p-5">
-          <h3 className="font-bold text-stone-900 mb-4">Order Status</h3>
-          {pieData.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={140}>
-                <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={65}
-                    dataKey="value" paddingAngle={3}>
-                    {pieData.map((_,i)=><Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]}/>)}
-                  </Pie>
-                  <Tooltip contentStyle={{borderRadius:10,fontSize:12}}/>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="space-y-1.5 mt-2">
-                {pieData.map((d,i)=>(
-                  <div key={d.name} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full" style={{background:PIE_COLORS[i % PIE_COLORS.length]}}/>
-                      <span className="text-stone-600 capitalize">{d.name}</span>
+            {/* Recent Orders */}
+            <div className="bg-white rounded-xl border border-gray-200">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h2 className="font-semibold text-gray-900">Recent Orders</h2>
+                <button onClick={() => setTab('orders')} className="text-xs text-blue-600 hover:underline flex items-center gap-1">View all <ArrowUpRight size={12}/></button>
+              </div>
+              <div className="divide-y divide-gray-50">
+                {orders.slice(0,4).map(o => (
+                  <div key={o.id} className="flex items-center justify-between px-6 py-3">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{o.order_number}</div>
+                      <div className="text-xs text-gray-500">{o.customer_name} · {fmt(o.created_at)}</div>
                     </div>
-                    <span className="font-bold text-stone-700">{d.value}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-sm">{fmtCur(o.total)}</span>
+                      <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[o.status]}`}>
+                        {STATUS_ICON[o.status]} {o.status}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
-            </>
-          ) : (
-            <div className="h-40 flex items-center justify-center text-stone-400 text-xs text-center">
-              <div><Package size={24} className="mx-auto mb-2 opacity-30"/>No orders yet</div>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-3 gap-5">
-        {/* Recent Orders */}
-        <div className="col-span-2 bg-white rounded-xl border border-stone-200">
-          <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between">
-            <h3 className="font-bold text-stone-900">Recent Orders</h3>
-            <Link href="/admin/orders" className="text-xs text-rose-600 hover:underline flex items-center gap-1">
-              View all <ArrowUpRight size={11}/>
-            </Link>
-          </div>
-          {loading ? (
-            <div className="p-5 space-y-3">
-              {Array.from({length:4}).map((_,i)=>(
-                <div key={i} className="animate-pulse flex gap-3">
-                  <div className="h-4 bg-stone-100 rounded flex-1"/>
-                  <div className="h-4 bg-stone-100 rounded w-20"/>
+            {/* Low Stock Alert */}
+            {lowStock > 0 && (
+              <div className="bg-white rounded-xl border border-red-200">
+                <div className="flex items-center gap-2 px-6 py-4 border-b border-red-100">
+                  <AlertCircle size={16} className="text-red-500"/>
+                  <h2 className="font-semibold text-red-700">Low Stock Alert</h2>
                 </div>
-              ))}
+                <div className="divide-y divide-gray-50">
+                  {products.filter(p => p.stock_left < 15).map(p => (
+                    <div key={p.id} className="flex items-center justify-between px-6 py-3">
+                      <div className="text-sm font-medium text-gray-900">{p.name}</div>
+                      <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full">{p.stock_left}m left</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── ORDERS ── */}
+        {tab === 'orders' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+                <input value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Search by order no, name, mobile..."
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-300"/>
+              </div>
+              <span className="text-sm text-gray-500">{filteredOrders.length} orders</span>
             </div>
-          ) : stats?.recentOrders?.length ? (
-            <table className="w-full">
-              <thead>
-                <tr className="text-xs font-semibold text-stone-400 border-b border-stone-50">
-                  <th className="px-5 py-2.5 text-left">ORDER</th>
-                  <th className="px-5 py-2.5 text-left">CUSTOMER</th>
-                  <th className="px-5 py-2.5 text-right">AMOUNT</th>
-                  <th className="px-5 py-2.5 text-left">STATUS</th>
+
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    {['Order #','Customer','Date','Amount','Payment','Status','Action'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredOrders.map(o => (
+                    <tr key={o.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-mono text-xs font-semibold text-blue-600">{o.order_number}</td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-gray-900">{o.customer_name}</div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1"><Phone size={10}/>{o.customer_mobile}</div>
+                        {o.shipping_address?.city && <div className="text-xs text-gray-400">{o.shipping_address.city}, {o.shipping_address.state}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{fmt(o.created_at)}</td>
+                      <td className="px-4 py-3 font-bold text-gray-900">{fmtCur(o.total)}</td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">{o.payment_method}</td>
+                      <td className="px-4 py-3">
+                        <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium w-fit ${STATUS_COLORS[o.status]}`}>
+                          {STATUS_ICON[o.status]} {o.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={o.status}
+                          disabled={updatingOrder === o.id}
+                          onChange={e => updateOrderStatus(o.id, e.target.value as OrderStatus)}
+                          className="text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-stone-400 disabled:opacity-50">
+                          {(['confirmed','processing','packed','shipped','delivered','cancelled'] as OrderStatus[]).map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
+              {filteredOrders.length === 0 && (
+                <div className="text-center py-12 text-gray-400">No orders found</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── PRODUCTS ── */}
+        {tab === 'products' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/admin/products/new"
+                className="flex items-center gap-1.5 bg-primary text-white text-sm px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium flex-shrink-0"
+              >
+                <Package size={14} /> Add Product
+              </Link>
+              <div className="relative flex-1 max-w-sm">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+                <input value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-300"/>
+              </div>
+              <span className="text-sm text-gray-500">{filteredProducts.length} products</span>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    {['Product','Category','Price (₹/m)','Stock','Rating','Active','Actions'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredProducts.map(p => (
+                    <tr key={p.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <Link href={`/fabrics/${p.slug}`} className="font-medium text-gray-900 hover:text-blue-600">{p.name}</Link>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 text-xs">{p.category}</td>
+                      <td className="px-4 py-3">
+                        {editingProduct === p.id ? (
+                          <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)}
+                            className="w-20 border border-blue-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"/>
+                        ) : (
+                          <span className="font-semibold">₹{p.price}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {editingProduct === p.id ? (
+                          <input type="number" value={editStock} onChange={e => setEditStock(e.target.value)}
+                            className="w-16 border border-blue-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"/>
+                        ) : (
+                          <span className={`font-semibold ${p.stock_left < 15 ? 'text-red-600' : 'text-green-600'}`}>
+                            {p.stock_left}m
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="flex items-center gap-1 text-xs text-amber-600">
+                          <Star size={11} className="fill-amber-400 text-amber-400"/> {p.rating} ({p.ratings_count})
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button onClick={() => toggleActive(p.id, p.is_active)}
+                          className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${p.is_active ? 'bg-green-500' : 'bg-gray-300'}`}>
+                          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${p.is_active ? 'translate-x-4' : 'translate-x-0.5'}`}/>
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        {editingProduct === p.id ? (
+                          <div className="flex gap-2">
+                            <button onClick={() => saveProduct(p.id)} disabled={savingId === p.id}
+                              className="text-xs bg-green-600 text-white px-2 py-1 rounded flex items-center gap-1 hover:bg-green-700 disabled:opacity-50">
+                              <Save size={11}/> Save
+                            </button>
+                            <button onClick={() => setEditingProduct(null)}
+                              className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">
+                              <X size={11}/>
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => { setEditingProduct(p.id); setEditPrice(String(p.price)); setEditStock(String(p.stock_left)) }}
+                            className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                            <Edit2 size={11}/> Edit
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
+            </div>
+          </div>
+        )}
+
+        {/* ── WHOLESALE ── */}
+        {tab === 'wholesale' && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900">B2B Wholesale Enquiries</h2>
+              <p className="text-xs text-gray-500 mt-1">{wholesale.length} total enquiries · {newEnquiries} new</p>
+            </div>
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  {['Business','Contact','Mobile','City','Volume','Status','Date'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-50">
-                {stats.recentOrders.map((o:any)=>(
-                  <tr key={o.orderNumber} className="hover:bg-stone-50">
-                    <td className="px-5 py-3 font-mono text-xs font-bold text-rose-600">{o.orderNumber}</td>
-                    <td className="px-5 py-3">
-                      <p className="text-sm font-medium text-stone-800">{o.customerName}</p>
-                      <p className="text-xs text-stone-400">{o.city}</p>
+              <tbody className="divide-y divide-gray-50">
+                {wholesale.map(w => (
+                  <tr key={w.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{w.business_name}</td>
+                    <td className="px-4 py-3 text-gray-600">{w.contact_name}</td>
+                    <td className="px-4 py-3 text-gray-600">{w.mobile}</td>
+                    <td className="px-4 py-3 text-gray-600">{w.city}</td>
+                    <td className="px-4 py-3 text-gray-600 text-xs">{w.monthly_volume || '—'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        w.status === 'converted' ? 'bg-green-100 text-green-700' :
+                        w.status === 'contacted' ? 'bg-blue-100 text-blue-700' :
+                        w.status === 'closed'    ? 'bg-gray-100 text-gray-600' :
+                        'bg-amber-100 text-amber-700'}`}>{w.status}</span>
                     </td>
-                    <td className="px-5 py-3 text-right font-bold text-stone-900">₹{o.amount?.toLocaleString('en-IN')}</td>
-                    <td className="px-5 py-3">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full capitalize"
-                        style={{background:`${STATUS_COLORS[o.status]}20`,color:STATUS_COLORS[o.status]}}>
-                        {o.status}
-                      </span>
-                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{fmt(w.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
-            </table>
-          ) : (
-            <div className="py-10 text-center text-stone-400 text-sm">
-              <ShoppingBag size={24} className="mx-auto mb-2 opacity-30"/>No orders yet
-            </div>
-          )}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl border border-stone-200 p-5">
-          <h3 className="font-bold text-stone-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label:'Add Product',   href:'/admin/products/add', icon: Plus,        color:'bg-rose-50 text-rose-600' },
-              { label:'View Orders',   href:'/admin/orders',       icon: ShoppingBag,  color:'bg-blue-50 text-blue-600' },
-              { label:'Inventory',     href:'/admin/inventory',    icon: Layers,       color:'bg-amber-50 text-amber-600' },
-              { label:'Customers',     href:'/admin/customers',    icon: Users,        color:'bg-green-50 text-green-600' },
-              { label:'Invoices',      href:'/admin/invoices',     icon: FileBarChart, color:'bg-purple-50 text-purple-600' },
-              { label:'Reports',       href:'/admin/reports',      icon: TrendingUp,   color:'bg-teal-50 text-teal-600' },
-            ].map(a=>(
-              <Link key={a.label} href={a.href}
-                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-stone-100 hover:border-stone-200 hover:shadow-sm transition-all text-center">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${a.color}`}>
-                  <a.icon size={16}/>
-                </div>
-                <span className="text-xs font-semibold text-stone-700">{a.label}</span>
-              </Link>
-            ))}
+            </table></div>
+            {wholesale.length === 0 && <div className="text-center py-12 text-gray-400">No wholesale enquiries yet</div>}
           </div>
-        </div>
+        )}
+
+        {tab === 'messages' && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900">Contact Messages</h2>
+              <p className="text-xs text-gray-500 mt-1">{contacts.length} total messages{newMessages > 0 ? ` · ${newMessages} new` : ''}</p>
+            </div>
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[700px]">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  {['Name','Mobile','Subject','Message','Status','Date'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {contacts.map(c => (
+                  <tr key={c.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{c.name}</td>
+                    <td className="px-4 py-3">
+                      <a href={`https://wa.me/91${c.mobile.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
+                        className="text-emerald-600 hover:underline flex items-center gap-1">
+                        <Phone size={12}/> {c.mobile}
+                      </a>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 text-xs">{c.subject}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px] truncate" title={c.message}>{c.message}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        c.status === 'replied' ? 'bg-green-100 text-green-700' :
+                        c.status === 'read'    ? 'bg-blue-100 text-blue-700' :
+                        c.status === 'closed'  ? 'bg-gray-100 text-gray-600' :
+                        'bg-amber-100 text-amber-700'}`}>{c.status}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{fmt(c.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table></div>
+            {contacts.length === 0 && <div className="text-center py-12 text-gray-400">No contact messages yet</div>}
+          </div>
+        )}
+
       </div>
     </div>
   )

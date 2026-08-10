@@ -2,6 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import FabricDetailClient from './FabricDetailClient'
 
+// Always fetch fresh data — never serve a cached price
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // Fetch product from gf_products by slug
 async function getProduct(slug: string) {
   const supabase = createClient(
@@ -54,8 +58,8 @@ export default async function FabricDetailPage({ params }: { params: { slug: str
     fullName:    product.full_name || product.name,
     slug:        product.slug,
     category:    product.category || '',
-    price:       Number(product.price),
-    mrp:         Number(product.original_price || product.price),
+    price:       Number(product.selling_price || product.price || 0),
+    mrp:         Number(product.mrp || product.original_price || product.selling_price || 0),
     fabricType:  product.fabric_type || '',
     printType:   product.print_type || '',
     gsm:         product.gsm ? `${product.gsm} GSM` : '',
@@ -64,7 +68,7 @@ export default async function FabricDetailPage({ params }: { params: { slug: str
     season:      Array.isArray(product.season) ? product.season.join(' / ') : product.season || '',
     washCare:    Array.isArray(product.wash_care) ? product.wash_care.join(', ') : product.wash_care || '',
     description: product.description || '',
-    stockLeft:   Number(product.stock_metres || 50),
+    stockLeft:   Number(product.stock_meters || product.stock_metres || 50),
     isNewArrival:product.is_new_arrival || false,
     isTrending:  product.is_trending || false,
     images:      imageUrls,

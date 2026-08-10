@@ -45,7 +45,6 @@ type Product = {
 
 export default function HomePage() {
   const [allProducts, setAllProducts] = useState<Product[]>([])
-  const [activeTab, setActiveTab]     = useState('all')
   const [loading, setLoading]         = useState(true)
 
   useEffect(() => {
@@ -65,17 +64,11 @@ export default function HomePage() {
       })
   }, [])
 
-  // Filter by active tab, limit 6
-  const displayed = activeTab === 'all'
-    ? allProducts.slice(0, 6)
-    : allProducts.filter(p => catMatch(p.category, activeTab)).slice(0, 6)
-
-  // Which categories actually have products (show only tabs with data)
-  const activeCats = CATEGORIES.filter(c =>
-    c.key === 'all' || allProducts.some(p => catMatch(p.category, c.key))
-  )
-
-  const viewAllHref = CATEGORIES.find(c => c.key === activeTab)?.href || '/fabrics'
+  // Build category rows — only categories that have at least 1 product
+  const categoryRows = CATEGORIES.filter(c => c.key !== 'all').map(cat => ({
+    ...cat,
+    products: allProducts.filter(p => catMatch(p.category, cat.key)).slice(0, 6),
+  })).filter(row => row.products.length > 0)
 
   return (
     <>
@@ -127,90 +120,114 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ===== SHOP BY CATEGORY — Live Product Grid ===== */}
+      {/* ===== SHOP BY CATEGORY — One Row Per Category ===== */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
+
+          {/* Section Header */}
+          <div className="text-center mb-12">
             <div className="inline-block bg-red-50 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-3">Shop by Category</div>
             <h2 className="section-title mb-3">Fabrics for Every Occasion</h2>
             <p className="text-gray-500 max-w-md mx-auto">Handpicked premium fabrics — updated live from our collection.</p>
           </div>
 
-          {/* Category Tabs */}
-          <div className="flex flex-wrap gap-2 justify-center mb-8">
-            {(loading ? CATEGORIES : activeCats).map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => setActiveTab(cat.key)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
-                  activeTab === cat.key
-                    ? 'bg-primary text-white border-primary shadow-md'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Product Grid */}
-          {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="rounded-xl overflow-hidden bg-white shadow-sm">
-                  <div className="aspect-[3/4] bg-gray-100 animate-pulse" />
-                  <div className="p-3 space-y-2">
-                    <div className="h-3 bg-gray-100 animate-pulse rounded w-2/3" />
-                    <div className="h-3 bg-gray-100 animate-pulse rounded w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : displayed.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
-              <div className="text-4xl mb-3">🧵</div>
-              <p className="text-lg font-medium">No products yet in this category</p>
-              <p className="text-sm mt-1">Add products via the Admin Panel — they&apos;ll appear here instantly.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {displayed.map((p) => (
-                <div key={p.id} className="card group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-                  <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={p.cloudinary_url || FALLBACK_IMG}
-                      alt={p.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-2.5">
-                    <div className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{p.category}</div>
-                    <Link href={`/fabrics/${p.slug}`} className="text-xs font-semibold text-gray-800 line-clamp-2 hover:text-primary transition-colors block mb-1.5">
-                      {p.name}
-                    </Link>
-                    <div className="flex items-baseline gap-1 mb-2">
-                      <span className="text-sm font-bold text-primary">₹{p.selling_price}</span>
-                      {p.mrp && p.mrp > p.selling_price && (
-                        <span className="text-xs text-gray-400 line-through">₹{p.mrp}</span>
-                      )}
-                      <span className="text-xs text-gray-400">/m</span>
-                    </div>
-                    <Link href={`/fabrics/${p.slug}`}
-                      className="block w-full bg-primary text-white text-xs font-semibold py-1.5 rounded-lg text-center hover:bg-primary-dark transition-colors">
-                      View Details
-                    </Link>
+          {/* Loading skeletons */}
+          {loading && (
+            <div className="space-y-14">
+              {[1, 2].map(s => (
+                <div key={s}>
+                  <div className="h-6 bg-gray-200 animate-pulse rounded w-48 mb-5" />
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {[1,2,3,4,5,6].map(i => (
+                      <div key={i} className="rounded-xl overflow-hidden bg-white shadow-sm">
+                        <div className="aspect-[3/4] bg-gray-100 animate-pulse" />
+                        <div className="p-3 space-y-2">
+                          <div className="h-3 bg-gray-100 animate-pulse rounded w-2/3" />
+                          <div className="h-3 bg-gray-100 animate-pulse rounded w-1/2" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          <div className="text-center mt-8">
-            <Link href={viewAllHref} className="btn-primary !text-sm !px-7 !py-3">
-              View All {activeTab === 'all' ? 'Fabrics' : CATEGORIES.find(c=>c.key===activeTab)?.label} →
-            </Link>
-          </div>
+          {/* Category rows */}
+          {!loading && (
+            <div className="space-y-14">
+              {categoryRows.length === 0 ? (
+                <div className="text-center py-20 text-gray-400">
+                  <div className="text-5xl mb-4">🧵</div>
+                  <p className="text-lg font-medium">No products yet</p>
+                  <p className="text-sm mt-1">Add products via the Admin Panel — they&apos;ll appear here instantly.</p>
+                </div>
+              ) : categoryRows.map((row) => (
+                <div key={row.key}>
+                  {/* Row header */}
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-1 h-7 bg-primary rounded-full" />
+                      <h3 className="font-playfair text-2xl font-bold text-gray-800">{row.label}</h3>
+                      <span className="text-xs bg-red-50 text-primary font-semibold px-2 py-0.5 rounded-full">
+                        {row.products.length} item{row.products.length > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <Link href={row.href} className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
+                      View All {row.label} →
+                    </Link>
+                  </div>
+
+                  {/* Product row */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {row.products.map((p) => (
+                      <div key={p.id} className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
+                        <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={p.cloudinary_url || FALLBACK_IMG}
+                            alt={p.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          {p.mrp && p.mrp > p.selling_price && (
+                            <span className="absolute top-2 left-2 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              {Math.round((1 - p.selling_price / p.mrp) * 100)}% OFF
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-2.5">
+                          <Link href={`/fabrics/${p.slug}`} className="text-xs font-semibold text-gray-800 line-clamp-2 hover:text-primary transition-colors block mb-1.5">
+                            {p.name}
+                          </Link>
+                          <div className="flex items-baseline gap-1 mb-2">
+                            <span className="text-sm font-bold text-primary">₹{p.selling_price}</span>
+                            {p.mrp && p.mrp > p.selling_price && (
+                              <span className="text-xs text-gray-400 line-through">₹{p.mrp}</span>
+                            )}
+                            <span className="text-xs text-gray-400">/m</span>
+                          </div>
+                          <Link href={`/fabrics/${p.slug}`}
+                            className="block w-full bg-primary text-white text-xs font-semibold py-1.5 rounded-lg text-center hover:bg-primary-dark transition-colors">
+                            View Details
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* View All Fabrics CTA */}
+          {!loading && categoryRows.length > 0 && (
+            <div className="text-center mt-12">
+              <Link href="/fabrics" className="btn-primary !text-sm !px-8 !py-3.5">
+                🛍️ View All Fabrics →
+              </Link>
+            </div>
+          )}
+
         </div>
       </section>
 

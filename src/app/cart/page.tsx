@@ -31,9 +31,12 @@ declare global {
 export default function CartPage() {
   const router = useRouter()
   const [cart,      setCart]      = useState<CartItem[]>([])
-  const [coupon,    setCoupon]    = useState('')
-  const [couponOk,  setCouponOk]  = useState(false)
-  const [couponErr, setCouponErr] = useState('')
+  const [coupon,      setCoupon]      = useState('')
+  const [couponOk,    setCouponOk]    = useState(false)
+  const [couponErr,   setCouponErr]   = useState('')
+  const [couponLabel, setCouponLabel] = useState('')
+  const [discount,    setDiscount]    = useState(0)
+  const [validating,  setValidating]  = useState(false)
   const [placing,   setPlacing]   = useState(false)
   const [showForm,  setShowForm]  = useState(false)
   const [cfLoaded,  setCfLoaded]  = useState(false)
@@ -72,16 +75,36 @@ export default function CartPage() {
   }
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
-  const discount = couponOk ? Math.round(subtotal * 0.1) : 0
   const delivery = subtotal >= 4999 ? 0 : 99
   const total    = subtotal - discount + delivery
 
-  function applyCoupon() {
-    if (coupon.trim().toUpperCase() === 'NAARI10') {
-      setCouponOk(true); setCouponErr('')
-    } else {
-      setCouponOk(false); setCouponErr('Invalid coupon code')
+  async function applyCoupon() {
+    if (!coupon.trim()) return
+    setValidating(true)
+    setCouponErr('')
+    setCouponOk(false)
+    setDiscount(0)
+    try {
+      const res  = await fetch('/api/coupons/validate', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: coupon.trim(), subtotal }),
+      })
+      const data = await res.json()
+      if (data.valid) {
+        setCouponOk(true)
+        setDiscount(data.discount)
+        setCouponLabel(data.message)
+        setCouponErr('')
+      } else {
+        setCouponOk(false)
+        setDiscount(0)
+        setCouponErr(data.message || 'Invalid coupon code')
+      }
+    } catch {
+      setCouponErr('Could not validate coupon. Try again.')
     }
+    setValidating(false)
   }
 
   function upd(k: keyof typeof form, v: string) {
@@ -107,7 +130,7 @@ export default function CartPage() {
           shippingState:   form.state,
           shippingPincode: form.pincode,
           paymentMode:     form.paymentMode,
-          couponCode:      couponOk ? 'NAARI10' : undefined,
+          couponCode:      couponOk ? coupon.trim().toUpperCase() : undefined,
           source:          'website',
           items: cart.map(i => ({
             productName:    i.name,
@@ -229,12 +252,12 @@ export default function CartPage() {
                 <input value={coupon} onChange={e => setCoupon(e.target.value.toUpperCase())}
                   placeholder="NAARI10"
                   className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
-                <button onClick={applyCoupon}
-                  className="px-3 py-2 bg-gray-900 text-white text-sm rounded-xl font-medium hover:bg-gray-800 transition-colors">
-                  Apply
+                <button onClick={applyCoupon} disabled={validating}
+                  className="px-4 py-2 bg-gray-900 text-white text-sm rounded-xl font-medium hover:bg-gray-800 transition-colors disabled:opacity-60 flex items-center gap-1.5">
+                  {validating ? <><Loader2 size={13} className="animate-spin"/>Checking</> : 'Apply'}
                 </button>
               </div>
-              {couponOk  && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle size={11} /> 10% discount applied!</p>}
+              {couponOk  && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle size={11} /> {couponLabel}</p>}
               {couponErr && <p className="text-xs text-red-500 mt-1">{couponErr}</p>}
             </div>
 
@@ -247,7 +270,7 @@ export default function CartPage() {
               </div>
               {couponOk && (
                 <div className="flex justify-between text-sm text-green-600">
-                  <span>Coupon (NAARI10)</span>
+                  <span>Coupon ({coupon.trim().toUpperCase()})</span>
                   <span>−₹{discount.toLocaleString('en-IN')}</span>
                 </div>
               )}

@@ -1,10 +1,16 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
 import {
   ArrowLeft, Upload, Plus, X, Save, Eye, Package,
-  IndianRupee, Tag, Layers, ChevronDown, CheckCircle, Image
+  IndianRupee, Tag, Layers, ChevronDown, CheckCircle, Image, Ticket
 } from 'lucide-react'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 const CATEGORIES = ['Designer Sarees','Lehenga Fabrics','Kurti Fabrics','Plain Fabrics','Blouse Fabrics','Dupattas','Lining & Inner','Embroidery Work']
 const FABRIC_TYPES = ['Silk','Cotton','Georgette','Chiffon','Velvet','Linen','Rayon','Polyester','Net','Organza','Chanderi','Tussar']
@@ -19,6 +25,20 @@ export default function AddProductPage() {
   const [images, setImages] = useState<string[]>([])
   const [tags, setTags]     = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
+  const [coupons, setCoupons] = useState<{code:string; value:number; type:string}[]>([])
+
+  // Load active coupons for dropdown
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
+    supabase
+      .from('gf_coupons')
+      .select('code, value, type')
+      .eq('is_active', true)
+      .lte('start_date', today)
+      .gte('end_date', today)
+      .order('code')
+      .then(({ data }) => { if (data) setCoupons(data) })
+  }, [])
 
   const [form, setForm] = useState({
     name:        '',
@@ -45,6 +65,7 @@ export default function AddProductPage() {
     isFeatured:  false,
     isActive:    true,
     cloudinaryUrl: '',
+    couponCode:  '',
   })
 
   const f = (k: keyof typeof form, v: any) => setForm(p=>({...p,[k]:v}))
@@ -180,6 +201,27 @@ export default function AddProductPage() {
               </Field>
               <Field label="HSN Code"><Input k="hsnCode" placeholder="e.g. 5007"/></Field>
             </div>
+          </div>
+
+          {/* Coupon Assignment */}
+          <div className="bg-white rounded-xl border border-stone-200 p-5 space-y-3">
+            <h3 className="font-bold text-stone-900 text-sm flex items-center gap-2"><Ticket size={15}/>Assign Coupon to This Product</h3>
+            <p className="text-xs text-stone-500">Optional — if selected, only this coupon works for this product. Other coupons will be rejected.</p>
+            <select value={form.couponCode} onChange={e=>f('couponCode', e.target.value)}
+              className="w-full px-3 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-none focus:border-rose-400 bg-white">
+              <option value="">-- No specific coupon (all coupons apply) --</option>
+              {coupons.map(c => (
+                <option key={c.code} value={c.code}>
+                  {c.code} — {c.type === 'percent' ? `${c.value}% OFF` : `₹${c.value} OFF`}
+                </option>
+              ))}
+            </select>
+            {form.couponCode && (
+              <div className="flex items-center gap-2 text-xs bg-rose-50 text-rose-700 px-3 py-2 rounded-xl">
+                <Ticket size={12}/>
+                Only coupon <strong className="font-mono mx-1">{form.couponCode}</strong> will work for this product
+              </div>
+            )}
           </div>
 
           {/* Inventory */}

@@ -4,12 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 export const dynamic = 'force-dynamic'
 
 // POST /api/coupons/validate
-// Body: { code: string, subtotal: number }
+// Body: { code: string, subtotal: number, productSlugs?: string[] }
 // Returns: { valid, discount, message, coupon }
 
 export async function POST(req: NextRequest) {
   try {
-    const { code, subtotal } = await req.json()
+    const { code, subtotal, productSlugs } = await req.json()
 
     if (!code) return NextResponse.json({ valid: false, message: 'Please enter a coupon code' })
 
@@ -36,6 +36,28 @@ export async function POST(req: NextRequest) {
     // Check usage limit
     if (coupon.usage_limit > 0 && coupon.used_count >= coupon.usage_limit) {
       return NextResponse.json({ valid: false, message: 'This coupon has reached its usage limit' })
+    }
+
+    // Check product-level coupon restriction
+    // If any cart product has a specific coupon assigned, only that coupon is allowed for that product
+    if (productSlugs && productSlugs.length > 0) {
+      const { data: products } = await supabase
+        .from('gf_products')
+        .select('slug, coupon_code, name')
+        .in('slug', productSlugs)
+        .not('coupon_code', 'is', null)
+        .neq('coupon_code', '')
+
+      if (products && products.length > 0) {
+        const restricted = products.filter((p: any) => p.coupon_code && p.coupon_code !== code.trim().toUpperCase())
+        if (restricted.length > 0) {
+          const names = restricted.map((p: any) => p.name).join(', ')
+          return NextResponse.json({
+            valid: false,
+            message: `"${names}" only accepts coupon: ${restricted[0].coupon_code}`
+          })
+        }
+      }
     }
 
     // Check min order

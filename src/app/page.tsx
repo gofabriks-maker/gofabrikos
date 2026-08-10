@@ -6,20 +6,13 @@ import NewsletterForm from '@/components/ui/NewsletterForm'
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80'
 
-const STATIC_PRODUCTS = [
-  { name: 'Mull Chanderi Digital Print', category: 'Chanderi', price: 125, mrp: 150, img: 'https://images.unsplash.com/photo-1553827669-9d2e67e1e3a3?w=500&q=80', slug: 'mull-chanderi-digital-print' },
-  { name: 'Premium Georgette Floral',    category: 'Georgette', price: 185, mrp: 210, img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&q=80', slug: 'premium-georgette-floral' },
-  { name: 'Handblock Kalamkari Cotton',  category: 'Cotton',    price: 220, mrp: null, img: FALLBACK_IMG, slug: 'kalamkari-cotton' },
-  { name: 'Banarasi Silk Brocade',       category: 'Banarasi',  price: 480, mrp: 615, img: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=500&q=80', slug: 'banarasi-silk-brocade' },
-]
-
-// Fallback images if no products exist for that category yet
-const CATEGORY_CONFIG = [
-  { name: 'Saree Fabrics',   href: '/fabrics?category=Saree',          dbKeys: ['Saree','saree','Designer Sarees','designer sarees'], fallback: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80' },
-  { name: 'Blouse Fabrics',  href: '/fabrics?category=Blouse',         dbKeys: ['Blouse','blouse'],                                    fallback: 'https://images.unsplash.com/photo-1609505848912-b7c3b8b4beda?w=600&q=80' },
-  { name: 'Lehenga Fabrics', href: '/fabrics?category=Lehenga',        dbKeys: ['Lehenga','lehenga','Lehenga Fabrics'],                fallback: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
-  { name: 'Dress Materials', href: '/fabrics?category=Dress+Material', dbKeys: ['Dress Material','dress material','Dress Materials'],  fallback: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80' },
-  { name: 'Cotton Fabrics',  href: '/fabrics?category=Cotton',         dbKeys: ['Cotton','cotton','Cotton Fabrics'],                   fallback: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80' },
+const CATEGORIES = [
+  { label: 'All',           key: 'all',           href: '/fabrics' },
+  { label: 'Saree',         key: 'Designer Sarees',href: '/fabrics?category=Saree' },
+  { label: 'Blouse',        key: 'Blouse',         href: '/fabrics?category=Blouse' },
+  { label: 'Lehenga',       key: 'Lehenga',        href: '/fabrics?category=Lehenga' },
+  { label: 'Dress Material',key: 'Dress Material', href: '/fabrics?category=Dress+Material' },
+  { label: 'Cotton',        key: 'Cotton',         href: '/fabrics?category=Cotton' },
 ]
 
 const stats = [
@@ -37,74 +30,44 @@ const trustItems = [
   { icon: '💬', title: 'WhatsApp Support', sub: '8 AM – 9 PM daily' },
 ]
 
-type Product = { name: string; category: string; price: number; mrp: number | null; img: string; slug: string }
-type CategoryCard = { name: string; href: string; img: string; count: string }
+type Product = {
+  id: string; name: string; slug: string; category: string
+  selling_price: number; mrp: number | null; cloudinary_url: string | null
+}
 
 export default function HomePage() {
-  const [products, setProducts]     = useState<Product[]>(STATIC_PRODUCTS)
-  const [categories, setCategories] = useState<CategoryCard[]>(
-    CATEGORY_CONFIG.map(c => ({ name: c.name, href: c.href, img: c.fallback, count: '—' }))
-  )
-  const [loading, setLoading] = useState(true)
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [activeTab, setActiveTab]     = useState('all')
+  const [loading, setLoading]         = useState(true)
 
   useEffect(() => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
-
-    // Fetch all products in one call — use for both featured grid AND category images
     supabase
       .from('gf_products')
       .select('id, name, slug, category, selling_price, mrp, cloudinary_url')
+      .order('created_at', { ascending: false })
       .then(({ data, error }) => {
-        if (error || !data) { setLoading(false); return }
-
-        // ── Featured products (first 4) ──────────────────────────────
-        const featured = data.slice(0, 4)
-        if (featured.length > 0) {
-          setProducts(featured.map((p: any) => ({
-            name:     p.name,
-            category: p.category,
-            price:    p.selling_price,
-            mrp:      p.mrp || null,
-            img:      p.cloudinary_url || FALLBACK_IMG,
-            slug:     p.slug,
-          })))
-        }
-
-        // ── Category images from real products ───────────────────────
-        // Build map: category string (lowercase) → first product image
-        const imgMap: Record<string, string> = {}
-        const countMap: Record<string, number> = {}
-        data.forEach((p: any) => {
-          const cat = (p.category || '').toLowerCase().trim()
-          if (p.cloudinary_url && !imgMap[cat]) imgMap[cat] = p.cloudinary_url
-          countMap[cat] = (countMap[cat] || 0) + 1
-        })
-
-        setCategories(CATEGORY_CONFIG.map(cfg => {
-          // Try each dbKey variant (case-insensitive)
-          let img = cfg.fallback
-          let count = 0
-          for (const key of cfg.dbKeys) {
-            const k = key.toLowerCase().trim()
-            if (imgMap[k]) { img = imgMap[k]; break }
-          }
-          for (const key of cfg.dbKeys) {
-            count += countMap[key.toLowerCase().trim()] || 0
-          }
-          return {
-            name:  cfg.name,
-            href:  cfg.href,
-            img,
-            count: count > 0 ? `${count}` : '—',
-          }
-        }))
-
+        if (!error && data) setAllProducts(data)
         setLoading(false)
       })
   }, [])
+
+  // Filter by active tab, limit 6
+  const displayed = activeTab === 'all'
+    ? allProducts.slice(0, 6)
+    : allProducts.filter(p =>
+        p.category?.toLowerCase() === CATEGORIES.find(c => c.key === activeTab)?.key?.toLowerCase()
+      ).slice(0, 6)
+
+  // Which categories actually have products
+  const activeCats = CATEGORIES.filter(c =>
+    c.key === 'all' || allProducts.some(p => p.category?.toLowerCase() === c.key?.toLowerCase())
+  )
+
+  const viewAllHref = CATEGORIES.find(c => c.key === activeTab)?.href || '/fabrics'
 
   return (
     <>
@@ -125,7 +88,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-4 mb-12">
               <Link href="/fabrics" className="btn-primary text-base !px-7 !py-3.5">🛍️ Shop All Fabrics</Link>
-              <Link href="/visualizer" className="btn-outline text-white border-white/40 hover:border-gold hover:text-gold text-base !px-7 !py-3.5">👗 Try Fabric Visualizer</Link>
+              <Link href="/visualizer" className="btn-outline text-white border-white/40 hover:border-gold hover:text-gold text-base !px-7 !py-3.5">👗 Try Visualizer</Link>
             </div>
             <div className="flex flex-wrap gap-8">
               {stats.map((s) => (
@@ -156,91 +119,95 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ===== CATEGORIES ===== */}
+      {/* ===== SHOP BY CATEGORY — Live Product Grid ===== */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <div className="inline-block bg-red-50 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-3">Shop by Category</div>
             <h2 className="section-title mb-3">Fabrics for Every Occasion</h2>
-            <p className="text-gray-500 max-w-md mx-auto">From festive silks to everyday cotton — find the perfect fabric for every outfit.</p>
+            <p className="text-gray-500 max-w-md mx-auto">Handpicked premium fabrics — updated live from our collection.</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {categories.map((cat) => (
-              <Link key={cat.name} href={cat.href} className="group relative rounded-xl overflow-hidden aspect-[3/4] shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cat.img} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                <span className="absolute top-2.5 right-2.5 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full">{cat.count}</span>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 pt-8">
-                  <h3 className="font-playfair text-white font-semibold text-sm">{cat.name}</h3>
-                </div>
-              </Link>
+
+          {/* Category Tabs */}
+          <div className="flex flex-wrap gap-2 justify-center mb-8">
+            {(loading ? CATEGORIES : activeCats).map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => setActiveTab(cat.key)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                  activeTab === cat.key
+                    ? 'bg-primary text-white border-primary shadow-md'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary'
+                }`}
+              >
+                {cat.label}
+              </button>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ===== FEATURED PRODUCTS ===== */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="section-title mb-3">Trending This Season</h2>
-            <p className="text-gray-500">Fabrics our customers love most — handpicked for quality and style.</p>
-          </div>
-
+          {/* Product Grid */}
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-              {[1,2,3,4].map(i => (
-                <div key={i} className="rounded-xl overflow-hidden">
-                  <div className="aspect-[3/4] bg-gray-100 animate-pulse rounded-t-xl" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="rounded-xl overflow-hidden bg-white shadow-sm">
+                  <div className="aspect-[3/4] bg-gray-100 animate-pulse" />
                   <div className="p-3 space-y-2">
+                    <div className="h-3 bg-gray-100 animate-pulse rounded w-2/3" />
                     <div className="h-3 bg-gray-100 animate-pulse rounded w-1/2" />
-                    <div className="h-4 bg-gray-100 animate-pulse rounded w-3/4" />
-                    <div className="h-4 bg-gray-100 animate-pulse rounded w-1/3" />
                   </div>
                 </div>
               ))}
             </div>
+          ) : displayed.length === 0 ? (
+            <div className="text-center py-16 text-gray-400">
+              <div className="text-4xl mb-3">🧵</div>
+              <p className="text-lg font-medium">No products yet in this category</p>
+              <p className="text-sm mt-1">Add products via the Admin Panel — they&apos;ll appear here instantly.</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-              {products.map((p) => (
-                <div key={p.slug} className="card group relative">
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl bg-gray-100">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {displayed.map((p) => (
+                <div key={p.id} className="card group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.img || FALLBACK_IMG} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img
+                      src={p.cloudinary_url || FALLBACK_IMG}
+                      alt={p.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
-                  <div className="p-3">
-                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">{p.category}</div>
-                    <Link href={`/fabrics/${p.slug}`} className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 hover:text-primary transition-colors block mb-2">
+                  <div className="p-2.5">
+                    <div className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{p.category}</div>
+                    <Link href={`/fabrics/${p.slug}`} className="text-xs font-semibold text-gray-800 line-clamp-2 hover:text-primary transition-colors block mb-1.5">
                       {p.name}
                     </Link>
-                    <div className="flex items-baseline gap-1.5 mb-3">
-                      <span className="text-base font-bold text-primary">₹{p.price}</span>
-                      {p.mrp && p.mrp > p.price && <span className="text-xs text-gray-400 line-through">₹{p.mrp}</span>}
+                    <div className="flex items-baseline gap-1 mb-2">
+                      <span className="text-sm font-bold text-primary">₹{p.selling_price}</span>
+                      {p.mrp && p.mrp > p.selling_price && (
+                        <span className="text-xs text-gray-400 line-through">₹{p.mrp}</span>
+                      )}
                       <span className="text-xs text-gray-400">/m</span>
                     </div>
-                    <div className="flex gap-2">
-                      <Link href={`/fabrics/${p.slug}`} className="flex-1 bg-primary text-white text-xs font-semibold py-2 rounded-lg hover:bg-primary-dark transition-colors text-center">
-                        View Details
-                      </Link>
-                      <a href={`https://wa.me/918790125438?text=Hi%2C%20I%20want%20to%20order%20${encodeURIComponent(p.name)}`} target="_blank" rel="noopener noreferrer"
-                        className="w-9 h-9 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center justify-center text-sm transition-colors flex-shrink-0">
-                        💬
-                      </a>
-                    </div>
+                    <Link href={`/fabrics/${p.slug}`}
+                      className="block w-full bg-primary text-white text-xs font-semibold py-1.5 rounded-lg text-center hover:bg-primary-dark transition-colors">
+                      View Details
+                    </Link>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          <div className="text-center mt-10">
-            <Link href="/fabrics" className="btn-primary !text-base !px-8 !py-3.5">View All Fabrics →</Link>
+          <div className="text-center mt-8">
+            <Link href={viewAllHref} className="btn-primary !text-sm !px-7 !py-3">
+              View All {activeTab === 'all' ? 'Fabrics' : CATEGORIES.find(c=>c.key===activeTab)?.label} →
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ===== VISUALIZER PROMO ===== */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-dark rounded-2xl overflow-hidden relative min-h-[360px] flex items-center">
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1594938298603-c8148c4b4571?w=1200&q=80')] bg-cover bg-center opacity-20" />

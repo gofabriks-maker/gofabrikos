@@ -7,13 +7,21 @@ import NewsletterForm from '@/components/ui/NewsletterForm'
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80'
 
 const CATEGORIES = [
-  { label: 'All',           key: 'all',           href: '/fabrics' },
-  { label: 'Saree',         key: 'Designer Sarees',href: '/fabrics?category=Saree' },
-  { label: 'Blouse',        key: 'Blouse',         href: '/fabrics?category=Blouse' },
-  { label: 'Lehenga',       key: 'Lehenga',        href: '/fabrics?category=Lehenga' },
-  { label: 'Dress Material',key: 'Dress Material', href: '/fabrics?category=Dress+Material' },
-  { label: 'Cotton',        key: 'Cotton',         href: '/fabrics?category=Cotton' },
+  { label: 'All',           key: 'all',              href: '/fabrics' },
+  { label: 'Saree',         key: 'Designer Sarees',  href: '/fabrics?category=Saree' },
+  { label: 'Lehenga',       key: 'Lehenga Fabrics',  href: '/fabrics?category=Lehenga' },
+  { label: 'Blouse',        key: 'Blouse',           href: '/fabrics?category=Blouse' },
+  { label: 'Dress Material',key: 'Dress Material',   href: '/fabrics?category=Dress+Material' },
+  { label: 'Cotton',        key: 'Cotton',           href: '/fabrics?category=Cotton' },
 ]
+
+// Returns true if product's category matches a tab key (handles partial names)
+function catMatch(productCat: string | null, tabKey: string): boolean {
+  if (!productCat) return false
+  const pc = productCat.toLowerCase()
+  const tk = tabKey.toLowerCase()
+  return pc === tk || pc.includes(tk) || tk.includes(pc)
+}
 
 const stats = [
   { num: '2,400+', label: 'Fabric Designs' },
@@ -47,9 +55,11 @@ export default function HomePage() {
     )
     supabase
       .from('gf_products')
-      .select('id, name, slug, category, selling_price, mrp, cloudinary_url')
+      .select('*')
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
+        console.log('Homepage products:', data?.length, error?.message)
         if (!error && data) setAllProducts(data)
         setLoading(false)
       })
@@ -58,13 +68,11 @@ export default function HomePage() {
   // Filter by active tab, limit 6
   const displayed = activeTab === 'all'
     ? allProducts.slice(0, 6)
-    : allProducts.filter(p =>
-        p.category?.toLowerCase() === CATEGORIES.find(c => c.key === activeTab)?.key?.toLowerCase()
-      ).slice(0, 6)
+    : allProducts.filter(p => catMatch(p.category, activeTab)).slice(0, 6)
 
-  // Which categories actually have products
+  // Which categories actually have products (show only tabs with data)
   const activeCats = CATEGORIES.filter(c =>
-    c.key === 'all' || allProducts.some(p => p.category?.toLowerCase() === c.key?.toLowerCase())
+    c.key === 'all' || allProducts.some(p => catMatch(p.category, c.key))
   )
 
   const viewAllHref = CATEGORIES.find(c => c.key === activeTab)?.href || '/fabrics'

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import {
   Tag, Plus, Copy, Trash2, CheckCircle, XCircle, Clock,
-  Percent, IndianRupee, Users, ShoppingBag, Calendar, ToggleLeft, ToggleRight, Loader
+  Percent, IndianRupee, Users, ShoppingBag, Calendar, ToggleLeft, ToggleRight, Loader, Pencil
 } from 'lucide-react'
 
 const supabase = createClient(
@@ -54,13 +54,14 @@ const BLANK_FORM = {
 }
 
 export default function PromotionsPage() {
-  const [tab, setTab]         = useState<'all'|'active'|'scheduled'|'expired'|'disabled'>('all')
-  const [showModal, setModal] = useState(false)
-  const [copied, setCopied]   = useState<string|null>(null)
-  const [coupons, setCoupons] = useState<Coupon[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving,  setSaving]  = useState(false)
-  const [form,    setForm]    = useState<typeof BLANK_FORM>({...BLANK_FORM})
+  const [tab, setTab]           = useState<'all'|'active'|'scheduled'|'expired'|'disabled'>('all')
+  const [showModal, setModal]   = useState(false)
+  const [editingId, setEditingId] = useState<string|null>(null)
+  const [copied, setCopied]     = useState<string|null>(null)
+  const [coupons, setCoupons]   = useState<Coupon[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [saving,  setSaving]    = useState(false)
+  const [form,    setForm]      = useState<typeof BLANK_FORM>({...BLANK_FORM})
 
   // Load coupons from Supabase
   async function loadCoupons() {
@@ -99,7 +100,30 @@ export default function PromotionsPage() {
     if (!error) setCoupons(prev => prev.filter(x => x.id !== id))
   }
 
-  async function createCoupon() {
+  function openEdit(c: Coupon) {
+    setEditingId(c.id)
+    setForm({
+      code:         c.code,
+      type:         c.type,
+      value:        String(c.value),
+      min_order:    String(c.min_order || ''),
+      max_discount: c.max_discount ? String(c.max_discount) : '',
+      usage_limit:  String(c.usage_limit || ''),
+      start_date:   c.start_date,
+      end_date:     c.end_date,
+      applicable_to:c.applicable_to,
+      description:  c.description,
+    })
+    setModal(true)
+  }
+
+  function closeModal() {
+    setModal(false)
+    setEditingId(null)
+    setForm({...BLANK_FORM})
+  }
+
+  async function saveCoupon() {
     if (!form.code || !form.value) return
     setSaving(true)
     const payload = {
@@ -109,20 +133,33 @@ export default function PromotionsPage() {
       min_order:    parseFloat(form.min_order) || 0,
       max_discount: form.max_discount ? parseFloat(form.max_discount) : null,
       usage_limit:  parseInt(form.usage_limit) || 1000,
-      used_count:   0,
       start_date:   form.start_date || new Date().toISOString().split('T')[0],
       end_date:     form.end_date || '2099-12-31',
       is_active:    true,
       applicable_to:form.applicable_to,
       description:  form.description,
     }
-    const { data, error } = await supabase.from('gf_coupons').insert([payload]).select().single()
-    if (!error && data) {
-      setCoupons(prev => [data, ...prev])
-      setModal(false)
-      setForm({...BLANK_FORM})
+
+    if (editingId) {
+      // UPDATE existing
+      const { data, error } = await supabase
+        .from('gf_coupons').update(payload).eq('id', editingId).select().single()
+      if (!error && data) {
+        setCoupons(prev => prev.map(x => x.id === editingId ? data : x))
+        closeModal()
+      } else {
+        alert('Error: ' + (error?.message || 'Could not update coupon'))
+      }
     } else {
-      alert('Error: ' + (error?.message || 'Could not create coupon'))
+      // INSERT new
+      const { data, error } = await supabase
+        .from('gf_coupons').insert([{ ...payload, used_count: 0 }]).select().single()
+      if (!error && data) {
+        setCoupons(prev => [data, ...prev])
+        closeModal()
+      } else {
+        alert('Error: ' + (error?.message || 'Could not create coupon'))
+      }
     }
     setSaving(false)
   }
@@ -213,10 +250,13 @@ export default function PromotionsPage() {
                     <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[status]}`}>
                       <StatusIcon size={10}/>{status}
                     </span>
-                    <button onClick={() => toggleActive(c)} className="text-stone-400 hover:text-stone-600">
+                    <button onClick={() => toggleActive(c)} className="text-stone-400 hover:text-stone-600" title="Enable/Disable">
                       {c.is_active ? <ToggleRight size={20} className="text-green-500"/> : <ToggleLeft size={20}/>}
                     </button>
-                    <button onClick={() => deleteCoupon(c.id)} className="text-stone-300 hover:text-red-500 transition-colors">
+                    <button onClick={() => openEdit(c)} className="text-stone-400 hover:text-blue-500 transition-colors" title="Edit coupon">
+                      <Pencil size={15}/>
+                    </button>
+                    <button onClick={() => deleteCoupon(c.id)} className="text-stone-300 hover:text-red-500 transition-colors" title="Delete">
                       <Trash2 size={15}/>
                     </button>
                   </div>
@@ -267,8 +307,10 @@ export default function PromotionsPage() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-stone-900 text-base">Create New Coupon</h3>
-              <button onClick={() => setModal(false)} className="text-stone-400 hover:text-stone-600 text-lg font-bold">✕</button>
+              <h3 className="font-bold text-stone-900 text-base">
+                {editingId ? '✏️ Edit Coupon' : 'Create New Coupon'}
+              </h3>
+              <button onClick={closeModal} className="text-stone-400 hover:text-stone-600 text-lg font-bold">✕</button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -341,13 +383,16 @@ export default function PromotionsPage() {
             </div>
 
             <div className="flex gap-2 pt-2">
-              <button onClick={() => { setModal(false); setForm({...BLANK_FORM}) }}
+              <button onClick={closeModal}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-stone-200 text-stone-600 hover:bg-stone-50">
                 Cancel
               </button>
-              <button onClick={createCoupon} disabled={saving}
+              <button onClick={saveCoupon} disabled={saving}
                 className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-60 flex items-center justify-center gap-2">
-                {saving ? <><Loader size={14} className="animate-spin"/>Saving...</> : 'Create Coupon'}
+                {saving
+                  ? <><Loader size={14} className="animate-spin"/>Saving...</>
+                  : editingId ? '✓ Save Changes' : 'Create Coupon'
+                }
               </button>
             </div>
           </div>
